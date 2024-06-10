@@ -4,7 +4,7 @@
 from flask import Flask, request, jsonify
 import threading
 
-from builder import build_fix_message
+from builder import *
 from simulator import FIXSimulator
 
 app = Flask(__name__)
@@ -14,8 +14,7 @@ fix_simulator = FIXSimulator()
 @app.route('/send_message', methods=['POST'])
 def send_message():
     data = request.json
-    fixmessage = build_fix_message(data)
-    fix_simulator.send_message(fixmessage)
+    fix_simulator.send_message(data)
     return jsonify({"status": "Message sent"})
 
 
@@ -29,6 +28,17 @@ def retrieve_orders():
 def retrieve_single_order():
     data = request.json
     order_id = data.get('orderID')
+
+
+@app.route('/fixmessage/parse_to_json', methods=['POST'])
+def decode_fix_to_json():
+    data = request.json
+    if has_delimiters(data.get('message')):
+        fix_message_object = parse_fix_message(data.get('message'))
+    else:
+        fix_message_object = parse_fix_message_no_delimiter(data.get('message'))
+
+    return jsonify(fix_message_object)
 
 
 def run_flask_app():
