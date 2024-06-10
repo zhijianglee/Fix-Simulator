@@ -19,6 +19,18 @@ def send_message():
     return jsonify({"status": "Message sent"})
 
 
+@app.route('/orders/retrieve_orders', methods=['GET'])
+def retrieve_orders():
+    data = request.json
+    sender_comp_id = data.get('senderCompID')
+
+
+@app.route('/orders/retrieve_single_order', methods=['GET'])
+def retrieve_single_order():
+    data = request.json
+    order_id = data.get('orderID')
+
+
 def run_flask_app():
     app.run(host='0.0.0.0', port=5001)
 
