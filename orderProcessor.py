@@ -82,6 +82,7 @@ def handle_order(msg_dict, sequence_number, conn):
 
 def send_order_confirmation(order, sequence_number, conn):
     response_fields = {
+        '9' :'0',
         "11": str(order.ClOrdID),
         "14": str(0),
         "15": str(order.currency),
@@ -148,6 +149,7 @@ def send_partial_fills(order, sequence_number, conn):
             average_filled_price = 20
 
         response_fields = {
+            '9': '0',
             "11": str(order.ClOrdID),
             "14": filled_quantity,
             "15": str(order.currency),
@@ -182,10 +184,6 @@ def send_partial_fills(order, sequence_number, conn):
             "8": "FIX.4.2",
         }
 
-        response_message = build_fix_message(response_fields)
-        response_fields['9'] = str(len(response_message) - 7)  # Update body length
-        response_message = build_fix_message(response_fields)
-        response_fields['10'] = calculate_checksum(response_message)  # Update checksum
         time.sleep(fills_frequency_in_second)
         conn.send(build_fix_message(response_fields).encode('ascii'))
 
@@ -212,6 +210,7 @@ def send_full_fill(order, sequence_number, conn):
             average_filled_price = 20
 
         response_fields = {
+            '9': '0',
             "11": str(order.ClOrdID),
             "14": filled_quantity,
             "15": str(order.currency),
@@ -246,10 +245,6 @@ def send_full_fill(order, sequence_number, conn):
             "8": "FIX.4.2",
         }
 
-        response_message = build_fix_message(response_fields)
-        response_fields['9'] = str(len(response_message) - 7)  # Update body length
-        response_message = build_fix_message(response_fields)
-        response_fields['10'] = calculate_checksum(response_message)  # Update checksum
         time.sleep(fills_frequency_in_second)
         conn.send(build_fix_message(response_fields).encode('ascii'))
 
@@ -306,10 +301,6 @@ def send_rejection(order, sequence_number, conn):
         "8": "FIX.4.2",
     }
 
-    response_message = build_fix_message(response_fields)
-    response_fields['9'] = str(len(response_message) - 7)  # Update body length
-    response_message = build_fix_message(response_fields)
-    response_fields['10'] = calculate_checksum(response_message)  # Update checksum
     conn.send(build_fix_message(response_fields).encode('ascii'))
 
 

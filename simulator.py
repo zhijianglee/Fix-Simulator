@@ -53,7 +53,7 @@ class FIXSimulator:
                     message = data.decode('utf-8')
                     print(f"Received: {message}")
                     start_time = time.time()
-                    response = self.handle_message(message,conn)
+                    response = self.handle_message(message, conn)
                     time.sleep(1)
                     end_time = time.time()
                     processing_time = end_time - start_time
@@ -66,7 +66,7 @@ class FIXSimulator:
             except Exception as e:
                 print(f"Error: {e}")
 
-    def handle_message(self, message,conn):
+    def handle_message(self, message, conn):
         msg_dict = None
         if has_delimiters(message):
             print('This messsage has delimeter')
@@ -94,7 +94,7 @@ class FIXSimulator:
             elif msg_type == '0':
                 return self.create_heartbeat_response()
             elif msg_type == 'D':
-                return orderProcessor.handle_order(msg_dict, self.sequence_number,conn)
+                return orderProcessor.handle_order(msg_dict, self.sequence_number, conn)
             # else:
             #     return self.create_unsupported_response(msg_dict)
         else:
@@ -107,7 +107,7 @@ class FIXSimulator:
         print(self.sequence_number)
         response_fields = {
             '8': 'FIX.4.2',
-            '9': '000',  # Placeholder, will be updated later
+            '9': '0',
             '35': 'A',
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
@@ -115,39 +115,30 @@ class FIXSimulator:
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '98': '0',  # EncryptMethod
             '108': '60',  # HeartBtInt
-            '10': '000'  # Placeholder for checksum, will be updated later
         }
         print('Logon message created')
-        response_message = build_fix_message(response_fields)
-        response_fields['9'] = str(len(response_message) - 7)  # Update body length
-        response_message = build_fix_message(response_fields)
-        response_fields['10'] = calculate_checksum(response_message)  # Update checksum
-        print('Logon message sent')
-        return build_fix_message(response_fields)
+        fix_message = build_fix_message(response_fields)
+        return fix_message
 
     def create_heartbeat_response(self):
         self.sequence_number += 1
         response_fields = {
             '8': 'FIX.4.2',
-            '9': '000',  # Placeholder, will be updated later
+            '9': '0',
             '35': '0',
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
             '34': self.sequence_number,  # Message sequence number
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
-            '10': '000'  # Placeholder for checksum, will be updated later
         }
-        response_message = build_fix_message(response_fields)
-        response_fields['9'] = str(len(response_message) - 7)  # Update body length
-        response_message = build_fix_message(response_fields)
-        response_fields['10'] = calculate_checksum(response_message)  # Update checksum
-        return build_fix_message_no_delimiter(response_fields)
+        fix_message = build_fix_message(response_fields)
+        return fix_message
 
     def create_unsupported_response(self, msg_dict):
         self.sequence_number += 1
         response_fields = {
             '8': 'FIX.4.2',
-            '9': '000',  # Placeholder, will be updated later
+            '9': '0',
             '35': '3',  # Reject message type
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
@@ -155,19 +146,16 @@ class FIXSimulator:
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '45': msg_dict['34'],  # Reference sequence number
             '58': 'Unsupported message type',  # Text
-            '10': '000'  # Placeholder for checksum, will be updated later
+
         }
-        response_message = build_fix_message(response_fields)
-        response_fields['9'] = str(len(response_message) - 7)  # Update body length
-        response_message = build_fix_message(response_fields)
-        response_fields['10'] = calculate_checksum(response_message)  # Update checksum
-        return build_fix_message(response_fields)
+        fix_message = build_fix_message(response_fields)
+        return fix_message
 
     def create_login_unsuccessful_response(self, msg_dict, tag58_string):
         self.sequence_number += 1
         response_fields = {
             '8': 'FIX.4.2',
-            '9': '000',  # Placeholder, will be updated later
+            '9': '0',  # Placeholder, will be updated later
             '35': '3',  # Reject message type
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
@@ -177,10 +165,8 @@ class FIXSimulator:
             '58': tag58_string,  # Text
             '10': '000'  # Placeholder for checksum, will be updated later
         }
-        response_message = build_fix_message(response_fields)
-        response_fields['9'] = str(len(response_message) - 7)  # Update body length
-        response_fields['10'] = calculate_checksum(response_message)  # Update checksum
-        return build_fix_message(response_fields)
+        fix_message = build_fix_message(response_fields)
+        return fix_message
 
     def send_message(self, response_fields):
         with self.lock:
@@ -189,15 +175,9 @@ class FIXSimulator:
                 return
 
             self.sequence_number += 1
-            response_message = build_fix_message(response_fields)
-            response_fields['9'] = str(len(response_message) - 7)  # Update body length
-
-            response_fields['34'] = str(self.sequence_number)
-
-            response_fields['10'] = calculate_checksum(response_message)  # Update checksum
-            response_message = build_fix_message_no_delimiter(response_fields)
-            self.conn.sendall(response_message.encode('ascii'))
-            print(f"Sent: {response_message}")
+            fix_message = build_fix_message(response_fields)
+            self.conn.sendall(fix_message.encode('ascii'))
+            print(f"Sent: {fix_message}")
 
 
 if __name__ == "__main__":
