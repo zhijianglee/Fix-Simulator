@@ -32,11 +32,12 @@ def create_logon_message(sender_comp_id, target_comp_id):
         '8': 'FIX.4.2',
         '35': 'A',
         '49': sender_comp_id,
+        "141": "Y",
         '56': target_comp_id,
         '34': '1',
         '52': time.strftime("%Y%m%d-%H:%M:%S.000"),
         '98': '0',
-        '108': '30',
+        '108': '60',
         '10': '000'
     }
     message = build_fix_message(fields)
@@ -48,9 +49,9 @@ def create_logon_message(sender_comp_id, target_comp_id):
 
 def main():
     sender_comp_id = 'OMS_OCBC_01'
-    target_comp_id = 'SIM_LZJ_01'
+    target_comp_id = 'LZJSIM'
     host = '127.0.0.1'
-    port = 5000
+    port = 7418
 
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

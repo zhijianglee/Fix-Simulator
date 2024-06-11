@@ -114,7 +114,7 @@ def send_order_confirmation(order, sequence_number):
     response_fields['9'] = str(len(response_message) - 7)  # Update body length
     response_message = build_fix_message(response_fields)
     response_fields['10'] = calculate_checksum(response_message)  # Update checksum
-    return build_fix_message(response_fields)
+    return build_fix_message_no_delimiter(response_fields)
 
 
 def send_partial_fills(order, sequence_number):
@@ -177,7 +177,7 @@ def send_partial_fills(order, sequence_number):
         response_message = build_fix_message(response_fields)
         response_fields['10'] = calculate_checksum(response_message)  # Update checksum
         time.sleep(fills_frequency_in_second)
-        return build_fix_message(response_fields)
+        return build_fix_message_no_delimiter(response_fields)
 
 
 def send_full_fill(order, sequence_number):
@@ -240,7 +240,7 @@ def send_full_fill(order, sequence_number):
         response_message = build_fix_message(response_fields)
         response_fields['10'] = calculate_checksum(response_message)  # Update checksum
         time.sleep(fills_frequency_in_second)
-        return build_fix_message(response_fields)
+        return build_fix_message_no_delimiter(response_fields)
 
 
 def send_fills(order, sequence_number):
@@ -294,7 +294,7 @@ def send_rejection(order, sequence_number):
     response_fields['9'] = str(len(response_message) - 7)  # Update body length
     response_message = build_fix_message(response_fields)
     response_fields['10'] = calculate_checksum(response_message)  # Update checksum
-    return build_fix_message(response_fields)
+    return build_fix_message_no_delimiter(response_fields)
 
 
 def send_cancellation(order):

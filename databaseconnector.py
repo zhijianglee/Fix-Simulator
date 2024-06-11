@@ -10,11 +10,12 @@ with open('simulator.properties', 'rb') as config_file:
 username = configs.get('db_username').data
 password = configs.get('db_password').data
 dsn = configs.get('dsn').data  # Replace with your actual hostname, port, and service name
+sn=configs.get('sn').data
 sid = configs.get('sid').data
 hostname = configs.get('hostname').data
 port = configs.get('port').data
 
-conn = oracledb.connect(user=username, password=password, sid=sid, host=hostname, port=port)
+conn = oracledb.connect(user=username, password=password, service_name=dsn, host=hostname, port=port)
 with conn.cursor() as cur:
     cur.execute("SELECT 'Hello World!' FROM dual")
     res = cur.fetchall()
@@ -45,8 +46,7 @@ def get_data_from_db(query):
     # Convert the result to a JSON object
     json_result = json.dumps(result, indent=4)
 
-    # Print or use the JSON result
-    print(json_result)
+    return json_result
 
     # Clean up
     cursor.close()
