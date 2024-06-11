@@ -1,12 +1,15 @@
 import time
 from datetime import datetime
-from random import random
+import random
 
 import oracledb
 from jproperties import Properties
 
+import simulator
 from builder import *
 from dictionary import *
+
+from simulator import *
 
 configs = Properties()
 with open('simulator.properties', 'rb') as config_file:
@@ -40,7 +43,7 @@ class Order:
 
 
 # Need to add in all your expected keys
-def handle_order(msg_dict, sequence_number):
+def handle_order(msg_dict, sequence_number, conn):
     order_id = msg_dict.get('11')
     handle_inst = msg_dict.get('21')
     symbol = msg_dict.get('55')
@@ -49,7 +52,7 @@ def handle_order(msg_dict, sequence_number):
     security_id = msg_dict.get('48')
     side = msg_dict.get('54')
     sending_time = msg_dict.get('52')
-    on_behalf_of_comp_id = msg_dict('115')
+    on_behalf_of_comp_id = msg_dict.get('115')
     transact_time = msg_dict.get('60')
     order_qty = msg_dict.get('38')
     time_in_force = msg_dict.get('59')
@@ -70,19 +73,21 @@ def handle_order(msg_dict, sequence_number):
 
     sequence_number += 1
 
-    send_order_confirmation(order, sequence_number)
-    if configs.get('enable_auto_fill') == 'true':
-        send_fills(order, sequence_number)
+    send_order_confirmation(order, sequence_number, conn)
+    print(configs.get('enable_auto_fill').data)
+
+    if configs.get('enable_auto_fill').data == 'true':
+        return send_fills(order, sequence_number, conn)
 
 
-def send_order_confirmation(order, sequence_number):
+def send_order_confirmation(order, sequence_number, conn):
     response_fields = {
         "11": str(order.ClOrdID),
         "14": str(0),
         "15": str(order.currency),
         "150": str(ExecType.New.value),
         "151": str(order.OrderQty),
-        "17": str(random.randrange(1000000, 90000000, 3)),
+        "17": str(random.randint(100000, 999999)),
         "20": str(ExecTransType.New.value),
         "21": str(order.HandlInst),
         "22": str(order.id_source),
@@ -90,7 +95,7 @@ def send_order_confirmation(order, sequence_number):
         "32": "0",
         "34": str(sequence_number),
         "35": str(MsgType.Execution_Report.value),
-        "37": str(random.randrange(1000000, 90000000, 3)),
+        "37": str(random.randint(100000, 999999)),
         "38": str(order.OrderQty),
         "39": str(OrdStatus.New.value),
         "40": str(order.OrdType),
@@ -114,18 +119,24 @@ def send_order_confirmation(order, sequence_number):
     response_fields['9'] = str(len(response_message) - 7)  # Update body length
     response_message = build_fix_message(response_fields)
     response_fields['10'] = calculate_checksum(response_message)  # Update checksum
-    return build_fix_message_no_delimiter(response_fields)
+    conn.send(build_fix_message(response_fields).encode('ascii'))
 
 
-def send_partial_fills(order, sequence_number):
-    target_filled_quantity = (configs.get('partial_fill_percentage').data / 100) * order.OrderQty
-    fills_frequency_in_second = configs.get('fills_frequency_in_second').data
-    fill_quantity_per_frequency = configs.get('fill_quantity_per_frequency').data
+def send_partial_fills(order, sequence_number, conn):
+    order_qty = float(order.OrderQty)  # Convert to float for arithmetic operations
+    partial_fill_percentage = int(configs.get('partial_fill_percentage').data)  # Retrieve the percentage
+
+    # Calculate the target filled quantity
+    target_filled_quantity = (partial_fill_percentage / 100) * order_qty
+
+    print(target_filled_quantity)
+    fills_frequency_in_second = int(configs.get('fills_frequency_in_second').data)
+    fill_quantity_per_frequency = int(configs.get('fill_quantity_per_frequency').data)
     average_filled_price = 0
     filled_quantity = 0
 
     while filled_quantity < target_filled_quantity:
-        remaining_qty = order.OrderQty - filled_quantity
+        remaining_qty = int(order.OrderQty) - filled_quantity
         last_price = 0
 
         quantity_last_fill = fill_quantity_per_frequency
@@ -140,10 +151,9 @@ def send_partial_fills(order, sequence_number):
             "11": str(order.ClOrdID),
             "14": filled_quantity,
             "15": str(order.currency),
-            #    "128": "DEQT",
             "150": str(ExecType.Partially_Filled.value),
             "151": str(remaining_qty),
-            "17": str(random.randrange(1000000, 90000000, 3)),
+            "17": str(random.randint(100000, 999999)),
             "20": str(ExecTransType.Status.value),
             "21": str(order.HandlInst),
             "22": str(order.id_source),
@@ -151,7 +161,7 @@ def send_partial_fills(order, sequence_number):
             "32": str(quantity_last_fill),
             "34": str(sequence_number),
             "35": str(MsgType.Execution_Report.value),
-            "37": str(random.randrange(1000000, 90000000, 3)),
+            "37": str(random.randint(100000, 999999)),
             "38": str(order.OrderQty),
             "39": str(OrdStatus.Partially_Filled.value),
             "40": str(order.OrdType),
@@ -177,18 +187,20 @@ def send_partial_fills(order, sequence_number):
         response_message = build_fix_message(response_fields)
         response_fields['10'] = calculate_checksum(response_message)  # Update checksum
         time.sleep(fills_frequency_in_second)
-        return build_fix_message_no_delimiter(response_fields)
+        conn.send(build_fix_message(response_fields).encode('ascii'))
 
 
-def send_full_fill(order, sequence_number):
-    target_filled_quantity = (configs.get('partial_fill_percentage').data / 100) * order.OrderQty
-    fills_frequency_in_second = configs.get('fills_frequency_in_second').data
-    fill_quantity_per_frequency = configs.get('fill_quantity_per_frequency').data
+def send_full_fill(order, sequence_number, conn):
+    order_qty = float(order.OrderQty)  # Convert to float for arithmetic operations
+    partial_fill_percentage = int(configs.get('partial_fill_percentage').data)  # Retrieve the percentage
+
+    fills_frequency_in_second = int(configs.get('fills_frequency_in_second').data)
+    fill_quantity_per_frequency = int(configs.get('fill_quantity_per_frequency').data)
     average_filled_price = 0
     filled_quantity = 0
 
-    while filled_quantity < target_filled_quantity:
-        remaining_qty = order.OrderQty - filled_quantity
+    while filled_quantity < order_qty:
+        remaining_qty = int(order.OrderQty) - filled_quantity
         last_price = 0
 
         quantity_last_fill = fill_quantity_per_frequency
@@ -203,10 +215,9 @@ def send_full_fill(order, sequence_number):
             "11": str(order.ClOrdID),
             "14": filled_quantity,
             "15": str(order.currency),
-            #    "128": "DEQT",
             "150": str(ExecType.Filled.value),
             "151": str(remaining_qty),
-            "17": str(random.randrange(1000000, 90000000, 3)),
+            "17": str(random.randint(100000, 999999)),
             "20": str(ExecTransType.Status.value),
             "21": str(order.HandlInst),
             "22": str(order.id_source),
@@ -214,7 +225,7 @@ def send_full_fill(order, sequence_number):
             "32": str(quantity_last_fill),
             "34": str(sequence_number),
             "35": str(MsgType.Execution_Report.value),
-            "37": str(random.randrange(1000000, 90000000, 3)),
+            "37": str(random.randint(100000, 999999)),
             "38": str(order.OrderQty),
             "39": str(OrdStatus.Filled.value),
             "40": str(order.OrdType),
@@ -240,27 +251,32 @@ def send_full_fill(order, sequence_number):
         response_message = build_fix_message(response_fields)
         response_fields['10'] = calculate_checksum(response_message)  # Update checksum
         time.sleep(fills_frequency_in_second)
-        return build_fix_message_no_delimiter(response_fields)
+        conn.send(build_fix_message(response_fields).encode('ascii'))
 
 
-def send_fills(order, sequence_number):
-    if configs.get('reject_min_qty').data <= order.OrderQty <= configs.get('reject_max_qty').data:
-        return send_rejection(order, sequence_number)
-    elif configs.get('fully_fill_min_qty').data <= order.OrderQty <= configs.get('fully_fill_max_qty').data:
-        return send_full_fill(order, sequence_number)
-    elif configs.get('partial_fill_min_qty').data <= order.OrderQty:
-        return send_partial_fills(order, sequence_number)
+def send_fills(order, sequence_number, conn):
+    print(order.OrderQty)
+
+    if int(configs.get('reject_min_qty').data) <= int(order.OrderQty) <= int(configs.get('reject_max_qty').data):
+        print('Send Rejection')
+        send_rejection(order, sequence_number, conn)
+    elif (int(configs.get('fully_fill_min_qty').data) <= int(order.OrderQty) <=
+          int(configs.get('fully_fill_max_qty').data)):
+        print('Send Full Fill')
+        send_full_fill(order, sequence_number, conn)
+    elif int(configs.get('partial_fill_min_qty').data) <= int(order.OrderQty):
+        print('Send PF')
+        send_partial_fills(order, sequence_number, conn)
 
 
-def send_rejection(order, sequence_number):
+def send_rejection(order, sequence_number, conn):
     response_fields = {
         "11": str(order.ClOrdID),
         "14": str(0),
         "15": str(order.currency),
-        "128": "DEQT",
         "150": str(ExecType.Rejected.value),
         "151": str(order.OrderQty),
-        "17": str(random.randrange(1000000, 90000000, 3)),
+        "17": str(random.randint(100000, 999999)),
         "20": str(ExecTransType.Status.value),
         "21": str(order.HandlInst),
         "22": str(order.id_source),
@@ -268,7 +284,7 @@ def send_rejection(order, sequence_number):
         "32": "0",
         "34": str(sequence_number),
         "35": str(MsgType.Execution_Report.value),
-        "37": str(random.randrange(1000000, 90000000, 3)),
+        "37": str(random.randint(100000, 999999)),
         "38": str(order.OrderQty),
         "39": str(OrdStatus.Rejected.value),
         "40": str(order.OrdType),
@@ -294,7 +310,7 @@ def send_rejection(order, sequence_number):
     response_fields['9'] = str(len(response_message) - 7)  # Update body length
     response_message = build_fix_message(response_fields)
     response_fields['10'] = calculate_checksum(response_message)  # Update checksum
-    return build_fix_message_no_delimiter(response_fields)
+    conn.send(build_fix_message(response_fields).encode('ascii'))
 
 
 def send_cancellation(order):
