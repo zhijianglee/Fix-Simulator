@@ -33,14 +33,15 @@ def retrieve_single_order():
 @app.route('/fixmessage/parse_to_json', methods=['POST'])
 def decode_fix_to_json():
     data = request.json
-    if has_delimiters(data.get('message')):
-        print('Message got delimiter')
-        fix_message_object = parse_fix_message(data.get('message'))
-    else:
-        print('Message got no delimiter')
-        fix_message_object = parse_fix_message_no_delimiter(data.get('message'))
+    fix_message_object = parse_fix_message_to_json(data.get('message'),data.get('delimiter'))
+    # if has_delimiters(data.get('message')):
+    #     print('Message got delimiter')
+    #     fix_message_object = parse_fix_message(data.get('message'))
+    # else:
+    #     print('Message got no delimiter')
+    #     fix_message_object = parse_fix_message_no_delimiter(data.get('message'))
 
-    return jsonify(fix_message_object)
+    return fix_message_object
 
 
 def run_flask_app():

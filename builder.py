@@ -1,4 +1,5 @@
 from jproperties import Properties
+import json
 
 configs = Properties()
 with open('simulator.properties', 'rb') as config_file:
@@ -25,6 +26,40 @@ def parse_fix_message(message):
             key, value = field.split('=', 1)  # Split on the first '=' only
             parsed_message[key] = value
     return parsed_message
+
+
+def parse_fix_message_to_json(message, delimiter='^A'):
+    # Step 1: Replace the custom delimiter with the standard delimiter
+    standard_delimiter = '\x01'
+    message = message.replace(delimiter, standard_delimiter)
+
+    # Step 2: Split the message using the standard delimiter
+    fields = message.split(standard_delimiter)
+
+    # Step 2: Split the message using the standard delimiter
+    fields = message.split('\x01')
+
+    # Step 3: Convert the fields into a dictionary
+    message_dict = {}
+    for field in fields:
+        if '=' in field:
+            key, value = field.split('=', 1)  # Split only on the first '='
+            message_dict[key] = value
+
+    # Step 4: Convert the dictionary into a JSON object
+    message_json = json.dumps(message_dict, indent=4)
+
+    return message_json
+
+
+# def parse_fix_message(message):
+#     fields = message.split('\x01')
+#     msg_dict = {}
+#     for field in fields:
+#         if field:
+#             tag, value = field.split('=')
+#             msg_dict[tag] = value
+#     return msg_dict
 
 
 # Need to add in all your expected keys
