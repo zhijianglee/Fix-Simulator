@@ -90,6 +90,10 @@ class FIXSimulator:
             print('Correct Target Comp ID used by client')
 
             if msg_type == 'A':
+                reset_seq_num_flag = msg_dict.get('141')
+                if reset_seq_num_flag == 'Y':
+                    self.sequence_number = 1
+                    print('Sequence number reset due to ResetSeqNumFlag')
                 return self.create_logon_response()
             elif msg_type == '0':
                 return self.create_heartbeat_response()
@@ -103,7 +107,7 @@ class FIXSimulator:
                                                                      "is correct")
 
     def create_logon_response(self):
-        self.sequence_number += 1
+
         print(self.sequence_number)
         response_fields = {
             '8': 'FIX.4.2',
@@ -118,6 +122,7 @@ class FIXSimulator:
         }
         print('Logon message created')
         fix_message = build_fix_message(response_fields)
+        self.sequence_number += 1
         return fix_message
 
     def create_heartbeat_response(self):

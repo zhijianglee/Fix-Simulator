@@ -3,7 +3,7 @@ from flask import json
 from jproperties import Properties
 
 configs = Properties()
-with open('simulator.properties', 'rb') as config_file:
+with open('db.properties', 'rb') as config_file:
     configs.load(config_file)
 
 # Define your connection parameters

@@ -71,8 +71,6 @@ def handle_order(msg_dict, sequence_number, conn):
                   account, expire_time, client_id, None, ex_destination, last_mkt, None,
                   client_comp_id, sender_sub_id, currency, id_source)
 
-    sequence_number += 1
-
     send_order_confirmation(order, sequence_number, conn)
     print(configs.get('enable_auto_fill').data)
 
@@ -82,7 +80,9 @@ def handle_order(msg_dict, sequence_number, conn):
 
 def send_order_confirmation(order, sequence_number, conn):
     response_fields = {
-        '9' :'0',
+        "8": "FIX.4.2",
+        '9': '0',
+        "35": str(MsgType.Execution_Report.value),
         "11": str(order.ClOrdID),
         "14": str(0),
         "15": str(order.currency),
@@ -95,7 +95,7 @@ def send_order_confirmation(order, sequence_number, conn):
         "31": "0.0000",
         "32": "0",
         "34": str(sequence_number),
-        "35": str(MsgType.Execution_Report.value),
+
         "37": str(random.randint(100000, 999999)),
         "38": str(order.OrderQty),
         "39": str(OrdStatus.New.value),
@@ -113,13 +113,10 @@ def send_order_confirmation(order, sequence_number, conn):
         "59": str(order.TimeInForce),
         "6": "0.0000",
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
-        "8": "FIX.4.2",
+
     }
 
-    response_message = build_fix_message(response_fields)
-    response_fields['9'] = str(len(response_message) - 7)  # Update body length
-    response_message = build_fix_message(response_fields)
-    response_fields['10'] = calculate_checksum(response_message)  # Update checksum
+    sequence_number += 1
     conn.send(build_fix_message(response_fields).encode('ascii'))
 
 
@@ -149,6 +146,8 @@ def send_partial_fills(order, sequence_number, conn):
             average_filled_price = 20
 
         response_fields = {
+            "8": "FIX.4.2",
+            "35": str(MsgType.Execution_Report.value),
             '9': '0',
             "11": str(order.ClOrdID),
             "14": filled_quantity,
@@ -162,7 +161,6 @@ def send_partial_fills(order, sequence_number, conn):
             "31": str(last_price),
             "32": str(quantity_last_fill),
             "34": str(sequence_number),
-            "35": str(MsgType.Execution_Report.value),
             "37": str(random.randint(100000, 999999)),
             "38": str(order.OrderQty),
             "39": str(OrdStatus.Partially_Filled.value),
@@ -181,9 +179,9 @@ def send_partial_fills(order, sequence_number, conn):
             "75": datetime.now().strftime('%Y%m%d'),
             "6": str(average_filled_price),
             "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
-            "8": "FIX.4.2",
-        }
 
+        }
+        sequence_number += 1
         time.sleep(fills_frequency_in_second)
         conn.send(build_fix_message(response_fields).encode('ascii'))
 
@@ -195,58 +193,55 @@ def send_full_fill(order, sequence_number, conn):
     fills_frequency_in_second = int(configs.get('fills_frequency_in_second').data)
     fill_quantity_per_frequency = int(configs.get('fill_quantity_per_frequency').data)
     average_filled_price = 0
-    filled_quantity = 0
 
-    while filled_quantity < order_qty:
-        remaining_qty = int(order.OrderQty) - filled_quantity
-        last_price = 0
+    last_price = 0
 
-        quantity_last_fill = fill_quantity_per_frequency
-        filled_quantity += quantity_last_fill
+    quantity_last_fill = int(order.OrderQty)
+    filled_quantity = int(order.OrderQty)
+    remaining_qty = 0
 
-        if order.OrdType == '2':
-            average_filled_price = order.Price
-        elif order.OrdType == '1':
-            average_filled_price = 20
+    if order.OrdType == '2':
+        average_filled_price = order.Price
+    elif order.OrdType == '1':
+        average_filled_price = 20
 
-        response_fields = {
-            '9': '0',
-            "11": str(order.ClOrdID),
-            "14": filled_quantity,
-            "15": str(order.currency),
-            "150": str(ExecType.Filled.value),
-            "151": str(remaining_qty),
-            "17": str(random.randint(100000, 999999)),
-            "20": str(ExecTransType.Status.value),
-            "21": str(order.HandlInst),
-            "22": str(order.id_source),
-            "31": str(last_price),
-            "32": str(quantity_last_fill),
-            "34": str(sequence_number),
-            "35": str(MsgType.Execution_Report.value),
-            "37": str(random.randint(100000, 999999)),
-            "38": str(order.OrderQty),
-            "39": str(OrdStatus.Filled.value),
-            "40": str(order.OrdType),
-            "43": "Y",
-            "44": str(order.Price),
-            "48": str(order.Symbol),
-            "49": configs.get('simulator_comp_id').data,
-            "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
-            "54": str(order.Side),
-            "55": str(order.Symbol),
-            "56": str(order.ClientCompID),
-            "57": str(order.SenderSubID),
-            "58": str(configs.get('tag58_order_accepted').data),
-            "59": str(order.TimeInForce),
-            "75": datetime.now().strftime('%Y%m%d'),
-            "6": str(average_filled_price),
-            "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
-            "8": "FIX.4.2",
-        }
-
-        time.sleep(fills_frequency_in_second)
-        conn.send(build_fix_message(response_fields).encode('ascii'))
+    response_fields = {
+        '9': '0',
+        "35": str(MsgType.Execution_Report.value),
+        "11": str(order.ClOrdID),
+        "14": filled_quantity,
+        "15": str(order.currency),
+        "150": str(ExecType.Filled.value),
+        "151": str(remaining_qty),
+        "17": str(random.randint(100000, 999999)),
+        "20": str(ExecTransType.Status.value),
+        "21": str(order.HandlInst),
+        "22": str(order.id_source),
+        "31": str(last_price),
+        "32": str(quantity_last_fill),
+        "34": str(sequence_number),
+        "37": str(random.randint(100000, 999999)),
+        "38": str(order.OrderQty),
+        "39": str(OrdStatus.Filled.value),
+        "40": str(order.OrdType),
+        "43": "Y",
+        "44": str(order.Price),
+        "48": str(order.Symbol),
+        "49": configs.get('simulator_comp_id').data,
+        "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "54": str(order.Side),
+        "55": str(order.Symbol),
+        "56": str(order.ClientCompID),
+        "57": str(order.SenderSubID),
+        "58": str(configs.get('tag58_order_accepted').data),
+        "59": str(order.TimeInForce),
+        "75": datetime.now().strftime('%Y%m%d'),
+        "6": str(average_filled_price),
+        "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "8": "FIX.4.2",
+    }
+    sequence_number += 1
+    conn.send(build_fix_message(response_fields).encode('ascii'))
 
 
 def send_fills(order, sequence_number, conn):
@@ -266,6 +261,9 @@ def send_fills(order, sequence_number, conn):
 
 def send_rejection(order, sequence_number, conn):
     response_fields = {
+        "8": "FIX.4.2",
+        "9" :"0",
+        "35": str(MsgType.Execution_Report.value),
         "11": str(order.ClOrdID),
         "14": str(0),
         "15": str(order.currency),
@@ -278,7 +276,7 @@ def send_rejection(order, sequence_number, conn):
         "31": "0.0000",
         "32": "0",
         "34": str(sequence_number),
-        "35": str(MsgType.Execution_Report.value),
+
         "37": str(random.randint(100000, 999999)),
         "38": str(order.OrderQty),
         "39": str(OrdStatus.Rejected.value),
@@ -298,9 +296,9 @@ def send_rejection(order, sequence_number, conn):
         "6": "0.0000",
         "103": "0",
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
-        "8": "FIX.4.2",
-    }
 
+    }
+    sequence_number += 1
     conn.send(build_fix_message(response_fields).encode('ascii'))
 
 
