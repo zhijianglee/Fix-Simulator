@@ -34,8 +34,10 @@ def retrieve_single_order():
 def decode_fix_to_json():
     data = request.json
     if has_delimiters(data.get('message')):
+        print('Message got delimiter')
         fix_message_object = parse_fix_message(data.get('message'))
     else:
+        print('Message got no delimiter')
         fix_message_object = parse_fix_message_no_delimiter(data.get('message'))
 
     return jsonify(fix_message_object)

@@ -1,6 +1,30 @@
+from jproperties import Properties
+
+configs = Properties()
+with open('simulator.properties', 'rb') as config_file:
+    configs.load(config_file)
+
+# def parse_fix_message(message):
+#     fields = message.split('\x01')
+#     return {field.split('=')[0]: field.split('=')[1] for field in fields if '=' in field}
+delimiter = configs.get('delimiter').data
+
+
 def parse_fix_message(message):
-    fields = message.split('\x01')
-    return {field.split('=')[0]: field.split('=')[1] for field in fields if '=' in field}
+    # Split the message by the custom delimiter
+
+    if delimiter in message:
+        fields = message.split(delimiter)
+    else:
+        fields = message.split('\x01')
+
+    # Create a dictionary to hold the parsed key-value pairs
+    parsed_message = {}
+    for field in fields:
+        if '=' in field:
+            key, value = field.split('=', 1)  # Split on the first '=' only
+            parsed_message[key] = value
+    return parsed_message
 
 
 # Need to add in all your expected keys
