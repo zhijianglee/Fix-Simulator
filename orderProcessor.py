@@ -372,7 +372,7 @@ def send_full_fill(order, sequence_number, conn):
         '9': '0',
         "35": str(MsgType.Execution_Report.value),
         "11": str(order.ClOrdID),
-        "14": filled_quantity,
+        "14": str(filled_quantity),
         "15": str(order.currency),
         "150": str(ExecType.Filled.value),
         "151": str(remaining_qty),
@@ -405,14 +405,14 @@ def send_full_fill(order, sequence_number, conn):
     }
 
     conn.send(build_fix_message(response_fields).encode('ascii'))
-    databaseconnector.getSingleResultFromDB(
-        "UPDATE SIMULATOR_RECORDS SET CUMULATIVE_FILLED_QUANTITY ='" + 0 + "' WHERE ORDER_ID =" + "'" + str(
+    databaseconnector.doInsert(
+        "UPDATE SIMULATOR_RECORDS SET CUMULATIVE_FILLED_QUANTITY ='" + str(filled_quantity) + "' WHERE ORDER_ID =" + "'" + str(
             order.ClOrdID) + "'")
 
-    databaseconnector.getSingleResultFromDB(
-        "UPDATE SIMULATOR_RECORDS SET REMAINING_QTY ='" + 0 + "' WHERE ORDER_ID ='" + str(order.ClOrdID) + "'")
+    databaseconnector.doInsert(
+        "UPDATE SIMULATOR_RECORDS SET REMAINING_QTY ='" + str(remaining_qty) + "' WHERE ORDER_ID ='" + str(order.ClOrdID) + "'")
 
-    databaseconnector.getSingleResultFromDB(
+    databaseconnector.doInsert(
         "UPDATE SIMULATOR_RECORDS SET AVGPRICE ='" + str(average_filled_price) + "' WHERE ORDER_ID ='" + str(
             order.ClOrdID) + "'")
 
