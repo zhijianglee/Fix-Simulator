@@ -55,3 +55,4 @@ if __name__ == "__main__":
 
     simulator_thread.join()
     flask_thread.join()
+

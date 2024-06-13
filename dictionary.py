@@ -1,5 +1,12 @@
 from enum import Enum
 
+# Taken from https://www.onixs.biz/fix-dictionary/4.2/tagNum_29.html
+class LastCapacity(Enum):
+    Agent =1
+    Cross_As_Agent = 2
+    Cross_As_Principal =3
+    Principal =4
+
 
 # Taken form https://www.onixs.biz/fix-dictionary/4.2/tagNum_40.html
 class OrderType(Enum):
