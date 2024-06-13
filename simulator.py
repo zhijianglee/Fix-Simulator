@@ -123,6 +123,7 @@ class FIXSimulator:
             '8': 'FIX.4.2',
             '9': '0',
             '35': 'A',
+            '122': time.strftime("%Y%m%d-%H:%M:%S.000"),
             '141': 'Y',
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
@@ -142,6 +143,7 @@ class FIXSimulator:
             '8': 'FIX.4.2',
             '9': '0',
             '35': '0',
+            '122': time.strftime("%Y%m%d-%H:%M:%S.000"),
             '43': 'Y',
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
