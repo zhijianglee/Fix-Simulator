@@ -219,10 +219,10 @@ def send_partial_fills(order, sequence_number, conn):
         "11": str(order.ClOrdID),
         "29": str(LastCapacity.Agent.value),
         "1": str(order.Account),
-        "14": str(cumulative_filled_quantity),
+        "14": str(int(cumulative_filled_quantity)),
         "15": str(order.currency),
         "150": str(ExecType.Partially_Filled.value),
-        "151": str(remaining_qty),
+        "151": str(int(remaining_qty)),
         "17": str(random.randint(100000, 999999)),
         "20": str(ExecTransType.Status.value),
         "21": str(order.HandlInst),
@@ -432,6 +432,7 @@ def send_rejection(order, sequence_number, conn):
     sequence_number += 1
     fix_message = build_fix_message(response_fields)
     print('Send Reject message: ' + fix_message)
+    conn.send(fix_message.encode('ascii'))
     global_list.append(fix_message)
 
     return sequence_number
