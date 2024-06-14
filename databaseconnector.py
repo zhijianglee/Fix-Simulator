@@ -15,6 +15,21 @@ hostname = configs.get('hostname').data
 port = configs.get('port').data
 
 
+def make_db_insert(columns, values):
+    # Handle None values and format the values list for SQL query
+    formatted_values = [
+        f"'{value}'" if value is not None else 'NULL' for value in values
+    ]
+
+    # Construct the SQL query
+    insert_query = f"""
+    INSERT INTO SIMULATOR_RECORDS ({', '.join(columns)})
+    VALUES ({', '.join(formatted_values)})
+    """
+
+    doInsert(insert_query)
+
+
 def doInsert(query):
     try:
         connection = oracledb.connect(user=username, host=hostname, password=password, sid=sid, port=port)
@@ -34,7 +49,7 @@ def doInsert(query):
 
 def getSingleResultFromDB(query):
     try:
-        connection = oracledb.connect(user=username, host=hostname, password=password, sid=sid, port=port)
+        connection = oracledb.connect(user=username, host=hostname, password=password, service_name=sn, port=port)
         cursor = connection.cursor()
         print(query)
         cursor.execute(query)

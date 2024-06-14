@@ -1,3 +1,7 @@
+import databaseconnector
+from globals import global_list
+
+
 class SequenceManager:
     _instance = None
     _sequence_number = 1
@@ -8,6 +12,7 @@ class SequenceManager:
         return cls._instance
 
     def reset_sequence_number(self):
+        global_list.clear()
         self._sequence_number = 1
 
     def set_sequence_number(self, num):

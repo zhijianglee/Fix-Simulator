@@ -5,19 +5,25 @@ import threading
 
 from jproperties import Properties
 
+import databaseconnector
 import orderProcessor
+import proccessAmendment
+import proccessCancellation
+import sequence_manager
+
 from orderProcessor import *
 
 from builder import *
+from globals import global_list, global_seq_num
 from sequence_manager import SequenceManager
+
+sequence_manager = None
 
 configs = Properties()
 with open('simulator.properties', 'rb') as config_file:
     configs.load(config_file)
 
 SOH = '\x01'
-
-sequence_manager = SequenceManager()
 
 
 class FIXSimulator:
@@ -27,7 +33,8 @@ class FIXSimulator:
         self.senderCompID = None
         self.targetCompID = None
         self.conn = None
-        self.lock = threading.Lock()  # Lock for thread-safe message sending
+        self.sequence_number = 1
+        self.lock = threading.Lock()
 
     def start(self):
         thread = threading.Thread(target=self.run_server)
@@ -80,12 +87,6 @@ class FIXSimulator:
         print(msg_dict.get('56'))
         print(configs.get('simulator_comp_id').data)
 
-        sequence_number_from_client = msg_dict.get('34')
-        print('Sequence Number From Client:' + sequence_number_from_client)
-        print('Sequence Number Internal: ' + str(sequence_manager.get_sequence_number()))
-
-        sequence_manager.set_sequence_number(int(sequence_number_from_client))
-
         if msg_dict.get('56') == configs.get('simulator_comp_id').data:
 
             print(msg_dict.get('56'))
@@ -95,21 +96,33 @@ class FIXSimulator:
             if msg_type == 'A':
                 reset_seq_num_flag = msg_dict.get('141')
                 if reset_seq_num_flag == 'Y':
-                    sequence_manager.reset_sequence_number()
+                    self.sequence_number = 1
+                    global_list.clear()
                     print('Sequence number reset due to ResetSeqNumFlag')
                 return self.create_logon_response()
 
             elif msg_type == '0':
+
                 return self.create_heartbeat_response()
 
             elif msg_type == 'D':
-                return orderProcessor.handle_order(msg_dict, sequence_manager.get_sequence_number(), conn)
+                updated_sequence_number = orderProcessor.handle_order(msg_dict, self.sequence_number, conn)
+                self.sequence_number = updated_sequence_number
 
             elif msg_type == 'G':
-                return orderProcessor.get_amendment_request(msg_dict, sequence_manager.get_sequence_number(), conn)
+
+                self.sequence_number = proccessAmendment.get_amendment_request(msg_dict, self.sequence_number, conn)
 
             elif msg_type == 'F':
-                return orderProcessor.cancel_request(msg_dict, sequence_manager.get_sequence_number(), conn)
+
+                self.sequence_number = proccessCancellation.cancel_request(msg_dict, self.sequence_number, conn)
+
+            elif msg_type == '2':
+                return self.handle_resend_request(msg_dict)
+
+            elif msg_type == '1':
+
+                return self.respond_test_request()
             # else:
             #     return self.create_unsupported_response(msg_dict)
         else:
@@ -118,23 +131,24 @@ class FIXSimulator:
                                                                      "is correct")
 
     def create_logon_response(self):
-
+        global_list.clear()
         response_fields = {
             '8': 'FIX.4.2',
             '9': '0',
             '35': 'A',
-            '122': time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
             '141': 'Y',
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
-            '34': str(sequence_manager.get_sequence_number()),  # Message sequence number
+            '34': str(self.sequence_number),  # Message sequence number
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '98': '0',  # EncryptMethod
             '108': '60',  # HeartBtInt
         }
         print('Logon message created')
         fix_message = build_fix_message(response_fields)
-        sequence_manager.increment_sequence_number()
+        self.sequence_number += 1
+        global_list.append(fix_message)
         return fix_message
 
     def create_heartbeat_response(self):
@@ -143,15 +157,39 @@ class FIXSimulator:
             '8': 'FIX.4.2',
             '9': '0',
             '35': '0',
-            '122': time.strftime("%Y%m%d-%H:%M:%S.000"),
             '43': 'Y',
+            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
-            '34': sequence_manager.get_sequence_number(),  # Message sequence number
+            '34': str(self.sequence_number),  # Message sequence number
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
         }
         fix_message = build_fix_message(response_fields)
-        sequence_manager.increment_sequence_number()
+        self.sequence_number += 1
+        global_list.append(fix_message)
+
+        return fix_message
+
+    def respond_test_request(self):
+
+        response_fields = {
+            '8': 'FIX.4.2',
+            '9': '0',
+            '35': '0',
+            '43': 'Y',
+            "112": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            '49': self.senderCompID,  # Use configured target
+            '56': self.targetCompID,  # Use configured sender
+            '34': str(self.sequence_number),  # Message sequence number
+            '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
+        }
+        print('Responding to test request')
+        fix_message = build_fix_message(response_fields)
+        print(fix_message)
+        self.sequence_number += 1
+        global_list.append(fix_message)
+
         return fix_message
 
     def create_unsupported_response(self, msg_dict):
@@ -160,17 +198,20 @@ class FIXSimulator:
             '8': 'FIX.4.2',
             '9': '0',
             '43': 'Y',
+            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
             '35': '3',  # Reject message type
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
-            '34': str(sequence_manager.get_sequence_number()),  # Message sequence number
+            '34': str(self.sequence_number),  # Message sequence number
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '45': msg_dict['34'],  # Reference sequence number
             '58': 'Unsupported message type',  # Text
 
         }
         fix_message = build_fix_message(response_fields)
-        sequence_manager.increment_sequence_number()
+        self.sequence_number = +1
+        global_list.append(fix_message)
+
         return fix_message
 
     def create_login_unsuccessful_response(self, msg_dict, tag58_string):
@@ -181,29 +222,56 @@ class FIXSimulator:
             '35': '3',  # Reject message type
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
-            '34': str(sequence_manager.get_sequence_number()),  # Message sequence number
+            '34': str(self.sequence_number),  # Message sequence number
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '45': msg_dict['34'],  # Reference sequence number
             '58': tag58_string,  # Text
             '10': '000'  # Placeholder for checksum, will be updated later
         }
         fix_message = build_fix_message(response_fields)
-        sequence_manager.increment_sequence_number()
+        global_list.append(fix_message)
+        self.sequence_number = +1
         return fix_message
 
     def send_message(self, response_fields):
+
         with self.lock:
             if not self.conn:
                 print("No client connected to send messages.")
                 return
 
-            response_fields['34'] = str(sequence_manager.get_sequence_number())
+            response_fields['34'] = str(self.sequence_number)
             fix_message = build_fix_message(response_fields)
-            sequence_manager.increment_sequence_number()
+            global_list.append(fix_message)
+            self.sequence_number += 1
             self.conn.sendall(fix_message.encode('ascii'))
             print(f"Sent: {fix_message}")
+
+    def handle_resend_request(self, msg_dict):
+        print('Responding to client request to resend fix messages:')
+
+        from_seq = msg_dict.get('7')
+        to_seq = msg_dict.get('16')
+        print('Size of global list: ')
+        print(global_list.__len__())
+
+        start_index = (int(from_seq) - 1)
+        end_index = 0
+        if to_seq == '0':
+            end_index = global_list.__len__()
+
+        else:
+            end_index = int(to_seq)
+
+        while start_index < end_index:
+            fix_message = global_list.pop()
+            self.conn.sendall(global_list[start_index])
+            print("Fix Message Sent: " + fix_message)
+            start_index += 1
 
 
 if __name__ == "__main__":
     simulator = FIXSimulator()
     simulator.start()
+
+    # Defining global list to store fix messages that are sent out
