@@ -74,6 +74,12 @@ class FIXSimulator:
         self.sequence_number = load_sequence_number()
         self.message_log = []
         self.lock = threading.Lock()
+        self.clear_message_log_file()
+
+    def clear_message_log_file(self):
+        # Clear the contents of message_log.json
+        with open('message_log.json', 'w') as file:
+            json.dump([], file)
 
     def start(self):
         thread = threading.Thread(target=self.run_server)
@@ -183,7 +189,7 @@ class FIXSimulator:
             '35': 'A',
             "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
             '141': 'Y',
-            '43' : 'Y',
+            '43': 'Y',
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
             '34': str(self.sequence_number),  # Message sequence number
