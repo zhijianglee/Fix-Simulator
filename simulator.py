@@ -14,16 +14,38 @@ import sequence_manager
 from orderProcessor import *
 
 from builder import *
-from globals import global_list, global_seq_num
-from sequence_manager import SequenceManager
-
-sequence_manager = None
+from globals import global_list, global_seq_num, retrieve_messages
 
 configs = Properties()
 with open('simulator.properties', 'rb') as config_file:
     configs.load(config_file)
 
 SOH = '\x01'
+
+
+def get_current_utc_time():
+    from datetime import datetime
+    return datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+
+
+def send_sequence_reset(conn, new_seq_no, sender_comp_id, target_comp_id):
+    # Construct a Sequence Reset message (35=4)
+    seq_reset_msg = {
+        '8': 'FIX.4.2',
+        '9': '0',
+        '35': '4',
+        '49': sender_comp_id,
+        '56': target_comp_id,
+        '34': str(new_seq_no),
+        '36': str(new_seq_no),  # New sequence number
+        '52': get_current_utc_time(),
+
+    }
+    # Build final message
+    message = build_fix_message(seq_reset_msg)
+
+    # Send message to client
+    conn.sendall(message.encode('utf-8'))
 
 
 class FIXSimulator:
@@ -84,6 +106,7 @@ class FIXSimulator:
         self.targetCompID = msg_dict.get('49')
         self.senderCompID = configs.get('simulator_comp_id').data
         #    self.senderCompID = msg_dict.get('56')
+
         print(msg_dict.get('56'))
         print(configs.get('simulator_comp_id').data)
 
@@ -273,24 +296,20 @@ class FIXSimulator:
     def handle_resend_request(self, msg_dict):
         print('Responding to client request to resend fix messages:')
 
-        from_seq = msg_dict.get('7')
-        to_seq = msg_dict.get('16')
-        print('Size of global list: ')
-        print(global_list.__len__())
+        # Extract the sequence numbers from the Resend Request
+        begin_seq_no = int(msg_dict['7'])
+        end_seq_no = int(msg_dict['16'])
 
-        start_index = (int(from_seq) - 1)
-        end_index = 0
-        if to_seq == '0':
-            end_index = global_list.__len__()
+        # Retrieve the necessary messages from the message store
+        messages_to_resend = retrieve_messages(begin_seq_no, end_seq_no, global_list)
 
-        else:
-            end_index = int(to_seq)
+        # Send the messages
+        for msg in messages_to_resend:
+            self.conn.sendall(msg.encode('utf-8'))
 
-        while start_index < end_index:
-            fix_message = global_list[start_index]
-            self.conn.sendall(fix_message.encode('ascii'))
-            print("Fix Message Sent: " + fix_message)
-            start_index += 1
+        # Send a Sequence Reset (Gap Fill) if needed
+        if end_seq_no == 0:
+            send_sequence_reset(self.conn, begin_seq_no, self.senderCompID, self.targetCompID)
 
 
 if __name__ == "__main__":

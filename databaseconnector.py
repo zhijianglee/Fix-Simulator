@@ -40,16 +40,11 @@ def doInsert(query):
         print("Data inserted successfully.")
     except oracledb.DatabaseError as e:
         print(f"Database error: {e}")
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
 
 
 def getSingleResultFromDB(query):
     try:
-        connection = oracledb.connect(user=username, host=hostname, password=password, service_name=sn, port=port)
+        connection = oracledb.connect(user=username, host=hostname, password=password, sid=sid, port=port)
         cursor = connection.cursor()
         print(query)
         cursor.execute(query)
@@ -67,7 +62,7 @@ def getSingleResultFromDB(query):
 
 
 def getResultFromDB(query):
-    connection = oracledb.connect(user=username, host=hostname, password=password, service_name=sn, port=port)
+    connection = oracledb.connect(user=username, host=hostname, password=password, sid=sid, port=port)
     cursor = connection.cursor()
     try:
         cursor.execute(query)
