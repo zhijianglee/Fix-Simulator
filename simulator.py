@@ -121,8 +121,10 @@ class FIXSimulator:
                 return self.handle_resend_request(msg_dict)
 
             elif msg_type == '1':
-
                 return self.respond_test_request()
+
+            elif msg_type == '5':
+                return self.create_logout_response()
             # else:
             #     return self.create_unsupported_response(msg_dict)
         else:
@@ -146,6 +148,27 @@ class FIXSimulator:
             '108': '60',  # HeartBtInt
         }
         print('Logon message created')
+        fix_message = build_fix_message(response_fields)
+        self.sequence_number += 1
+        global_list.append(fix_message)
+        return fix_message
+
+    def create_logout_response(self):
+        global_list.clear()
+        response_fields = {
+            '8': 'FIX.4.2',
+            '9': '0',
+            '35': 'A',
+            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            '49': self.senderCompID,  # Use configured target
+            '56': self.targetCompID,  # Use configured sender
+            '58': 'LOgging out',
+            '34': str(self.sequence_number),  # Message sequence number
+            '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
+            '98': '0',  # EncryptMethod
+            '108': '60',  # HeartBtInt
+        }
+        print('Logout created')
         fix_message = build_fix_message(response_fields)
         self.sequence_number += 1
         global_list.append(fix_message)
@@ -264,8 +287,8 @@ class FIXSimulator:
             end_index = int(to_seq)
 
         while start_index < end_index:
-            fix_message = global_list.pop()
-            self.conn.sendall(global_list[start_index])
+            fix_message = global_list[start_index]
+            self.conn.sendall(fix_message.encode('ascii'))
             print("Fix Message Sent: " + fix_message)
             start_index += 1
 
