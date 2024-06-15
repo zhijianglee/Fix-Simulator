@@ -4,10 +4,11 @@ import databaseconnector
 from builder import build_fix_message
 from orderProcessor import *
 
-
 configs = Properties()
 with open('simulator.properties', 'rb') as config_file:
     configs.load(config_file)
+
+order_cancel_related_fm = []
 
 
 def cancel_request(msg_dict, sequence_number, conn):
@@ -29,10 +30,11 @@ def cancel_request(msg_dict, sequence_number, conn):
     cancel_order = Order(new_order_id, handle_inst, symbol, side, None, None, None,
                          None, None,
                          account, None, None, None, ex_destination, None, None,
-                         client_comp_id, sender_sub_id, None, id_source, on_behalf_of_comp_id, ori_order_id,security_id)
+                         client_comp_id, sender_sub_id, None, id_source, on_behalf_of_comp_id, ori_order_id,
+                         security_id)
 
-    updated_seq_num=send_cancellation(cancel_order, seq_to_use, conn)
-
+    updated_seq_num = send_cancellation(cancel_order, seq_to_use, conn)
+    sequencehandler.save_message_log(order_cancel_related_fm)
     return updated_seq_num
 
 
@@ -53,9 +55,8 @@ def send_cancellation(order, sequence_number, conn):
         "SELECT LIMIT_PRICE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
     time_in_force = (databaseconnector.getSingleResultFromDB(
         "SELECT TIME_IN_FORCE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
-    security_id= (databaseconnector.getSingleResultFromDB(
+    security_id = (databaseconnector.getSingleResultFromDB(
         "SELECT SECURITY_ID FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
-
 
     pending_cancel_response_fields = {
         "8": "FIX.4.2",
@@ -95,10 +96,12 @@ def send_cancellation(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
-    conn.send(build_fix_message(pending_cancel_response_fields).encode('ascii'))
+    fix_message=build_fix_message(pending_cancel_response_fields)
+    order_cancel_related_fm.append(fix_message)
+    conn.send(fix_message.encode('ascii'))
     global_list.append(build_fix_message(pending_cancel_response_fields))
-
     sequence_number += 1
+
     cancelled_response_fields = {
         "8": "FIX.4.2",
         '9': '0',
@@ -137,8 +140,9 @@ def send_cancellation(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
-    conn.send(build_fix_message(cancelled_response_fields).encode('ascii'))
-    build_fix_message(pending_cancel_response_fields)
+    fix_message = build_fix_message(pending_cancel_response_fields)
+    order_cancel_related_fm.append(fix_message)
+    conn.send(fix_message.encode('ascii'))
     sequence_number += 1
 
     databaseconnector.doInsert(

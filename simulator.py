@@ -1,4 +1,5 @@
-import logging
+import write_to_log
+import os
 import socket
 import time
 import threading
@@ -12,9 +13,10 @@ import proccessCancellation
 import sequence_manager
 
 from orderProcessor import *
-
+from write_to_log import *
 from builder import *
 from globals import global_list, global_seq_num, retrieve_messages
+from sequencehandler import save_sequence_number, save_message_log
 
 configs = Properties()
 with open('simulator.properties', 'rb') as config_file:
@@ -37,7 +39,7 @@ def send_sequence_reset(conn, new_seq_no, sender_comp_id, target_comp_id):
         '49': sender_comp_id,
         '56': target_comp_id,
         '34': str(new_seq_no),
-        '36': str(new_seq_no+1),  # New sequence number
+        '36': str(new_seq_no + 1),  # New sequence number
         '52': get_current_utc_time(),
 
     }
@@ -48,6 +50,20 @@ def send_sequence_reset(conn, new_seq_no, sender_comp_id, target_comp_id):
     conn.sendall(message.encode('utf-8'))
 
 
+def load_sequence_number():
+    if os.path.exists('sequence_number.json'):
+        with open('sequence_number.json', 'r') as file:
+            return json.load(file)
+    return 1
+
+
+def load_message_log():
+    if os.path.exists('message_log.json'):
+        with open('message_log.json', 'r') as file:
+            return json.load(file)
+    return []
+
+
 class FIXSimulator:
     def __init__(self, host='0.0.0.0', port=7418):
         self.host = host
@@ -55,7 +71,8 @@ class FIXSimulator:
         self.senderCompID = None
         self.targetCompID = None
         self.conn = None
-        self.sequence_number = 1
+        self.sequence_number = load_sequence_number()
+        self.message_log = []
         self.lock = threading.Lock()
 
     def start(self):
@@ -67,10 +84,10 @@ class FIXSimulator:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((self.host, self.port))
             s.listen()
-            print(f"Listening on {self.host}:{self.port}")
+            write_to_log.output_to_file_log_debug(f"Listening on {self.host}:{self.port}")
             while True:  # Loop to keep listening for connections
                 conn, addr = s.accept()
-                print(f"Connected by {addr}")
+                write_to_log.output_to_file_log_debug(f"Connected by {addr}")
                 self.conn = conn
                 threading.Thread(target=self.handle_connection, args=(conn,)).start()
 
@@ -82,46 +99,46 @@ class FIXSimulator:
                     if not data:
                         break
                     message = data.decode('utf-8')
-                    print(f"Received: {message}")
+                    write_to_log.output_to_file_log_debug(f"Received: {message}")
                     start_time = time.time()
                     response = self.handle_message(message, conn)
                     time.sleep(1)
                     end_time = time.time()
                     processing_time = end_time - start_time
-                    print(f"Processing time for message: {processing_time:.3f} seconds")
+                    write_to_log.output_to_file_log_debug(f"Processing time for message: {processing_time:.3f} seconds")
                     if response:
-                        print(f"Sending response: {response}")
+                        write_to_log.output_to_file_log_debug(f"Sending response: {response}")
                         conn.send(response.encode('ascii'))
             except ConnectionAbortedError as e:
-                print(f"Connection aborted: {e}")
+                write_to_log.output_to_file_log_debug(f"Connection aborted: {e}")
             except Exception as e:
-                print(f"Error: {e}")
+                write_to_log.output_to_file_log_debug(f"Error: {e}")
 
     def handle_message(self, message, conn):
 
         msg_dict = parse_fix_message(message)
 
         msg_type = msg_dict.get('35')
-        print('Msg Type 35' + msg_type)
+        output_to_file_log_debug('Msg Type 35' + msg_type)
         self.targetCompID = msg_dict.get('49')
         self.senderCompID = configs.get('simulator_comp_id').data
         #    self.senderCompID = msg_dict.get('56')
 
-        print(msg_dict.get('56'))
-        print(configs.get('simulator_comp_id').data)
+        output_to_file_log_debug(msg_dict.get('56'))
+        output_to_file_log_debug(configs.get('simulator_comp_id').data)
 
         if msg_dict.get('56') == configs.get('simulator_comp_id').data:
 
-            print(msg_dict.get('56'))
-            print(configs.get('simulator_comp_id').data)
-            print('Correct Target Comp ID used by client')
+            output_to_file_log_debug(msg_dict.get('56'))
+            output_to_file_log_debug(configs.get('simulator_comp_id').data)
+            output_to_file_log_debug('Correct Target Comp ID used by client')
 
             if msg_type == 'A':
                 reset_seq_num_flag = msg_dict.get('141')
                 if reset_seq_num_flag == 'Y':
                     self.sequence_number = 1
                     global_list.clear()
-                    print('Sequence number reset due to ResetSeqNumFlag')
+                    output_to_file_log_debug('Sequence number reset due to ResetSeqNumFlag')
                 return self.create_logon_response()
 
             elif msg_type == '0':
@@ -131,14 +148,17 @@ class FIXSimulator:
             elif msg_type == 'D':
                 updated_sequence_number = orderProcessor.handle_order(msg_dict, self.sequence_number, conn)
                 self.sequence_number = updated_sequence_number
+                save_sequence_number(self.sequence_number)
 
             elif msg_type == 'G':
 
                 self.sequence_number = proccessAmendment.get_amendment_request(msg_dict, self.sequence_number, conn)
+                save_sequence_number(self.sequence_number)
 
             elif msg_type == 'F':
 
                 self.sequence_number = proccessCancellation.cancel_request(msg_dict, self.sequence_number, conn)
+                save_sequence_number(self.sequence_number)
 
             elif msg_type == '2':
                 return self.handle_resend_request(msg_dict)
@@ -151,7 +171,7 @@ class FIXSimulator:
             # else:
             #     return self.create_unsupported_response(msg_dict)
         else:
-            print('Sent unsuccessful login')
+            output_to_file_log_debug('Sent unsuccessful login')
             return self.create_login_unsuccessful_response(msg_dict, "Login unsuccessful. Please check if targetCompID "
                                                                      "is correct")
 
@@ -163,6 +183,7 @@ class FIXSimulator:
             '35': 'A',
             "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
             '141': 'Y',
+            '43' : 'Y',
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
             '34': str(self.sequence_number),  # Message sequence number
@@ -170,9 +191,12 @@ class FIXSimulator:
             '98': '0',  # EncryptMethod
             '108': '60',  # HeartBtInt
         }
-        print('Logon message created')
+        output_to_file_log_debug('Logon message created')
         fix_message = build_fix_message(response_fields)
+        self.message_log.append(fix_message)
         self.sequence_number += 1
+        save_sequence_number(self.sequence_number)
+        save_message_log(self.message_log)
         global_list.append(fix_message)
         return fix_message
 
@@ -191,9 +215,12 @@ class FIXSimulator:
             '98': '0',  # EncryptMethod
             '108': '60',  # HeartBtInt
         }
-        print('Logout created')
+        output_to_file_log_debug('Logout created')
         fix_message = build_fix_message(response_fields)
+        self.message_log.append(fix_message)
         self.sequence_number += 1
+        save_sequence_number(self.sequence_number)
+        save_message_log(self.message_log)
         global_list.append(fix_message)
         return fix_message
 
@@ -211,7 +238,10 @@ class FIXSimulator:
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
         }
         fix_message = build_fix_message(response_fields)
+        self.message_log.append(fix_message)
         self.sequence_number += 1
+        save_sequence_number(self.sequence_number)
+        save_message_log(self.message_log)
         global_list.append(fix_message)
 
         return fix_message
@@ -230,10 +260,13 @@ class FIXSimulator:
             '34': str(self.sequence_number),  # Message sequence number
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
         }
-        print('Responding to test request')
+        output_to_file_log_debug('Responding to test request')
         fix_message = build_fix_message(response_fields)
-        print(fix_message)
+        output_to_file_log_debug(fix_message)
+        self.message_log.append(fix_message)
         self.sequence_number += 1
+        save_sequence_number(self.sequence_number)
+        save_message_log(self.message_log)
         global_list.append(fix_message)
 
         return fix_message
@@ -255,7 +288,10 @@ class FIXSimulator:
 
         }
         fix_message = build_fix_message(response_fields)
-        self.sequence_number = +1
+        self.message_log.append(fix_message)
+        self.sequence_number += 1
+        save_sequence_number(self.sequence_number)
+        save_message_log(self.message_log)
         global_list.append(fix_message)
 
         return fix_message
@@ -276,25 +312,31 @@ class FIXSimulator:
         }
         fix_message = build_fix_message(response_fields)
         global_list.append(fix_message)
-        self.sequence_number = +1
+        self.message_log.append(fix_message)
+        self.sequence_number += 1
+        save_sequence_number(self.sequence_number)
+        save_message_log(self.message_log)
         return fix_message
 
     def send_message(self, response_fields):
 
         with self.lock:
             if not self.conn:
-                print("No client connected to send messages.")
+                output_to_file_log_debug("No client connected to send messages.")
                 return
 
             response_fields['34'] = str(self.sequence_number)
             fix_message = build_fix_message(response_fields)
             global_list.append(fix_message)
+            self.message_log.append(fix_message)
             self.sequence_number += 1
+            save_sequence_number(self.sequence_number)
+            save_message_log(self.message_log)
             self.conn.sendall(fix_message.encode('ascii'))
-            print(f"Sent: {fix_message}")
+            output_to_file_log_debug(f"Sent: {fix_message}")
 
     def handle_resend_request(self, msg_dict):
-        print('Responding to client request to resend fix messages:')
+        output_to_file_log_debug('Responding to client request to resend fix messages:')
 
         # Extract the sequence numbers from the Resend Request
         begin_seq_no = int(msg_dict['7'])
@@ -306,9 +348,31 @@ class FIXSimulator:
             send_sequence_reset(self.conn, begin_seq_no, self.senderCompID, self.targetCompID)
 
         else:
-            while start_index < end_seq_no:
-                print(global_list[start_index])
-                self.conn.sendall(global_list[start_index].encode('ascii'))
+            with self.lock:
+                for seq_no in range(begin_seq_no, end_seq_no + 1):
+                    if seq_no - 1 < len(self.message_log):
+                        message = self.message_log[seq_no - 1]
+                        output_to_file_log_debug(f"Resending message: {message}")
+                        self.conn.sendall(message.encode('ascii'))
+                    else:
+                        output_to_file_log_debug(f"Message with sequence number {seq_no} not found in message_log.")
+
+    def regular_heartbeat(self):
+        while True:
+            with self.lock:
+                response_fields = {
+                    '8': 'FIX.4.2',
+                    '9': '0',
+                    '35': '0',
+                    '43': 'Y',
+                    "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+                    '49': self.senderCompID,
+                    '56': self.targetCompID,
+                    '34': str(self.sequence_number),
+                    '52': time.strftime("%Y%m%d-%H:%M:%S.000"),
+                }
+                self.send_message(response_fields)
+            time.sleep(60)  # Send a heartbeat every 30 seconds
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 # This file contains the code of flask application
 # Only need to run this to start both flask application and the simulator
+import asyncio
+
 
 from flask import Flask, request, jsonify
 import threading
@@ -49,10 +51,26 @@ def run_flask_app():
 
 
 if __name__ == "__main__":
-    simulator_thread = fix_simulator.start()
+    # simulator_thread = fix_simulator.start()
+    # flask_thread = threading.Thread(target=run_flask_app)
+    # flask_thread.start()
+    #
+    # simulator_thread.join()
+    # flask_thread.join()
+    simulator = FIXSimulator()
+
+    # Start the FIXSimulator server in a separate thread
+    simulator_thread = threading.Thread(target=lambda: asyncio.run(simulator.run_server()))
+    simulator_thread.start()
+
+    # Start the Flask application in the main thread
     flask_thread = threading.Thread(target=run_flask_app)
     flask_thread.start()
 
+    # Start a thread to send heartbeats
+    heartbeat_thread = threading.Thread(target=simulator.regular_heartbeat())
+    heartbeat_thread.start()
+
     simulator_thread.join()
     flask_thread.join()
-
+    heartbeat_thread.join()

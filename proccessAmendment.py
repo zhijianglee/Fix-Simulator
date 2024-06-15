@@ -5,10 +5,13 @@ import orderProcessor
 from builder import build_fix_message
 from globals import global_list
 from orderProcessor import *
+from write_to_log import *
 
 configs = Properties()
 with open('simulator.properties', 'rb') as config_file:
     configs.load(config_file)
+
+order_amendment_related_fm = []
 
 
 def get_amendment_request(msg_dict, sequence_number, conn):
@@ -44,6 +47,7 @@ def get_amendment_request(msg_dict, sequence_number, conn):
 
     updated_seq_num = send_amendment(new_order, new_order_qty, ori_order_id, seq_to_use, conn)
 
+    sequencehandler.save_message_log(order_amendment_related_fm)
     databaseconnector.doInsert(
         "UPDATE SIMULATOR_RECORDS SET ORDER_ID='" + str(new_order_id) + "' WHERE ORIGCLORDID='" + str(
             ori_order_id) + "'")
@@ -53,15 +57,15 @@ def get_amendment_request(msg_dict, sequence_number, conn):
 def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     cum_quantity = int(databaseconnector.getSingleResultFromDB(
         "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'"))
-    print(cum_quantity)
+    output_to_file_log_debug(cum_quantity)
 
     original_quantity = int(databaseconnector.getSingleResultFromDB(
         "SELECT ORDER_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'"))
 
-    print(original_quantity)
+    output_to_file_log_debug(original_quantity)
     remaining_quantity = 0
 
-    print('Constructing response fields')
+    output_to_file_log_debug('Constructing response fields')
     response_fields_pending_replace = {
         "8": "FIX.4.2",
         '9': '0',
@@ -102,8 +106,9 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     }
 
     sequence_number += 1
-
-    conn.send(build_fix_message(response_fields_pending_replace).encode('ascii'))
+    fix_message = build_fix_message(response_fields_pending_replace)
+    order_amendment_related_fm.append(fix_message)
+    conn.send(fix_message.encode('ascii'))
 
     remaining_quantity = int(new_quantity) - cum_quantity
 
@@ -147,21 +152,23 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
 
     }
     sequence_number += 1
+    fix_message = build_fix_message(response_fields_pending_replace)
+    order_amendment_related_fm.append(fix_message)
 
-    conn.send(build_fix_message(response_fields_replaced).encode('ascii'))
+    conn.send(fix_message.encode('ascii'))
     global_list.append(build_fix_message(response_fields_replaced))
 
-    print('After Amendment: Remaining Qty :' + str(remaining_quantity))
+    output_to_file_log_debug('After Amendment: Remaining Qty :' + str(remaining_quantity))
 
     if int(configs.get('reject_min_qty').data) <= remaining_quantity <= int(configs.get('reject_max_qty').data):
-        print('Send Rejection')
+        output_to_file_log_debug('Send Rejection')
         orderProcessor.send_rejection(order, sequence_number, conn)
     elif (int(configs.get('fully_fill_min_qty').data) <= remaining_quantity <=
           int(configs.get('fully_fill_max_qty').data)):
-        print('Send Full Fill')
+        output_to_file_log_debug('Send Full Fill')
         orderProcessor.send_full_fill(order, sequence_number, conn)
     elif int(configs.get('partial_fill_min_qty').data) <= remaining_quantity:
-        print('Send PF')
+        output_to_file_log_debug('Send PF')
         orderProcessor.send_partial_fills(order, sequence_number, conn)
 
     return sequence_number

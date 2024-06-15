@@ -1,11 +1,12 @@
 import time
 from datetime import datetime
 import random
-
+from write_to_log import *
 import databaseconnector
 from jproperties import Properties
 
 import sequence_manager
+import sequencehandler
 import simulator
 from builder import *
 from dictionary import *
@@ -17,6 +18,8 @@ from sequence_manager import SequenceManager
 configs = Properties()
 with open('simulator.properties', 'rb') as config_file:
     configs.load(config_file)
+
+orders_creation_related_fm = []
 
 
 class Order:
@@ -124,10 +127,12 @@ def handle_order(msg_dict, sequence_number, conn):
 
     databaseconnector.doInsert(insert_query)
 
-    print(configs.get('enable_auto_fill').data)
+    output_to_file_log_debug(configs.get('enable_auto_fill').data)
 
     if configs.get('enable_auto_fill').data == 'true':
         updated_seq_num = send_fills(order, updated_seq_num, conn)
+
+    sequencehandler.save_message_log(orders_creation_related_fm)
 
     return updated_seq_num
 
@@ -171,11 +176,12 @@ def send_order_confirmation(order, sequence_number, conn):
     }
     if order.OrdType == '1':
         response_fields.pop('44')
-    fix_message=build_fix_message(response_fields)
+    fix_message = build_fix_message(response_fields)
     global_list.append(fix_message)
+    orders_creation_related_fm.append(fix_message)
     conn.send(fix_message.encode('ascii'))
     sequence_number += 1
-    print('Send order confirmation fix message: ' + build_fix_message(response_fields))
+    output_to_file_log_debug('Send order confirmation fix message: ' + build_fix_message(response_fields))
     return sequence_number
 
 
@@ -193,8 +199,8 @@ def send_partial_fills(order, sequence_number, conn):
     cumulative_filled_quantity = int(order.executed_quantity)
     remaining_qty = -1
 
-    print('Target to fill qty: ')
-    print(target_filled_quantity)
+    output_to_file_log_debug('Target to fill qty: ')
+    output_to_file_log_debug(target_filled_quantity)
 
     remaining_qty = int(order.OrderQty) - target_filled_quantity
     last_price = 0
@@ -259,7 +265,8 @@ def send_partial_fills(order, sequence_number, conn):
         response_fields.pop('44')
 
     fix_message = build_fix_message(response_fields)
-    print('Send PF fix message: ' + fix_message)
+    output_to_file_log_debug('Send PF fix message: ' + fix_message)
+    orders_creation_related_fm.append(fix_message)
     conn.send(fix_message.encode('ascii'))
     global_list.append(fix_message)
     sequence_number += 1
@@ -357,7 +364,8 @@ def send_full_fill(order, sequence_number, conn):
     if order.OrdType == '1':
         response_fields.pop('44')
     fix_message = build_fix_message(response_fields)
-    print('Send FF fix message: ' + fix_message)
+    orders_creation_related_fm.append(fix_message)
+    output_to_file_log_debug('Send FF fix message: ' + fix_message)
     global_list.append(fix_message)
     sequence_number += 1
 
@@ -379,17 +387,17 @@ def send_full_fill(order, sequence_number, conn):
 
 
 def send_fills(order, sequence_number, conn):
-    print(order.OrderQty)
+    output_to_file_log_debug(order.OrderQty)
 
     if int(configs.get('reject_min_qty').data) <= int(order.OrderQty) <= int(configs.get('reject_max_qty').data):
-        print('Send Rejection')
+        output_to_file_log_debug('Send Rejection')
         sequence_number = send_rejection(order, sequence_number, conn)
     elif (int(configs.get('fully_fill_min_qty').data) <= int(order.OrderQty) <=
           int(configs.get('fully_fill_max_qty').data)):
-        print('Send Full Fill')
+        output_to_file_log_debug('Send Full Fill')
         sequence_number = send_full_fill(order, sequence_number, conn)
     elif int(configs.get('partial_fill_min_qty').data) <= int(order.OrderQty):
-        print('Send PF')
+        output_to_file_log_debug('Send PF')
         sequence_number = send_partial_fills(order, sequence_number, conn)
 
     return sequence_number
@@ -437,8 +445,8 @@ def send_rejection(order, sequence_number, conn):
     }
     sequence_number += 1
     fix_message = build_fix_message(response_fields)
-    print('Send Reject message: ' + fix_message)
+    output_to_file_log_debug('Send Reject message: ' + fix_message)
     conn.send(fix_message.encode('ascii'))
     global_list.append(fix_message)
-
+    orders_creation_related_fm.append(fix_message)
     return sequence_number
