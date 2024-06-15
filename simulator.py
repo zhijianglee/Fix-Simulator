@@ -37,7 +37,7 @@ def send_sequence_reset(conn, new_seq_no, sender_comp_id, target_comp_id):
         '49': sender_comp_id,
         '56': target_comp_id,
         '34': str(new_seq_no),
-        '36': str(new_seq_no),  # New sequence number
+        '36': str(new_seq_no+1),  # New sequence number
         '52': get_current_utc_time(),
 
     }
@@ -300,16 +300,15 @@ class FIXSimulator:
         begin_seq_no = int(msg_dict['7'])
         end_seq_no = int(msg_dict['16'])
 
-        # Retrieve the necessary messages from the message store
-        messages_to_resend = retrieve_messages(begin_seq_no, end_seq_no, global_list)
+        start_index = begin_seq_no - 1
 
-        # Send the messages
-        for msg in messages_to_resend:
-            self.conn.sendall(msg.encode('utf-8'))
-
-        # Send a Sequence Reset (Gap Fill) if needed
         if end_seq_no == 0:
             send_sequence_reset(self.conn, begin_seq_no, self.senderCompID, self.targetCompID)
+
+        else:
+            while start_index < end_seq_no:
+                print(global_list[start_index])
+                self.conn.sendall(global_list[start_index].encode('ascii'))
 
 
 if __name__ == "__main__":

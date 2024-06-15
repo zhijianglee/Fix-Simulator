@@ -169,6 +169,8 @@ def send_order_confirmation(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
+    if order.OrdType == '1':
+        response_fields.pop('44')
     fix_message=build_fix_message(response_fields)
     global_list.append(fix_message)
     conn.send(fix_message.encode('ascii'))
@@ -253,6 +255,8 @@ def send_partial_fills(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
+    if order.OrdType == '1':
+        response_fields.pop('44')
 
     fix_message = build_fix_message(response_fields)
     print('Send PF fix message: ' + fix_message)
@@ -350,6 +354,8 @@ def send_full_fill(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
+    if order.OrdType == '1':
+        response_fields.pop('44')
     fix_message = build_fix_message(response_fields)
     print('Send FF fix message: ' + fix_message)
     global_list.append(fix_message)

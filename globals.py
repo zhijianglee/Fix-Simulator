@@ -5,8 +5,13 @@ global_seq_num = 1
 
 
 def retrieve_messages(begin_seq_no, end_seq_no, message_store):
-    # Assuming message_store is a list of messages with their sequence numbers
-    return [msg for seq, msg in message_store if begin_seq_no <= seq <= end_seq_no]
+    print('Getting messages')
+    retrieved_messages = []
+    for seq, msg in message_store:
+        if begin_seq_no <= seq <= end_seq_no:
+            retrieved_messages.append(msg)
+            print(msg)
+    return retrieved_messages
 
 
 def store_message(seq_no, message):
