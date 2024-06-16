@@ -32,7 +32,7 @@ def retrieve_single_order():
     order_id = data.get('orderID')
 
 
-@app.route('/fixmessage/parse_to_json', methods=['POST'])
+@app.route('/fix message/parse_to_json', methods=['POST'])
 def decode_fix_to_json():
     data = request.json
     fix_message_object = parse_fix_message_to_json(data.get('message'),data.get('delimiter'))
