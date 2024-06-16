@@ -38,7 +38,7 @@ Simulator.properties containing list of configured properties. Only below are wo
 1. Ensure the below modules are being installed Refer to requirements.txt
 2. Start the simulator by using apiservice.py
 
-# Known Bugs and Pull Requests is Welcomed
+# Known Bugs and Pull Requests are Welcomed
 1. Sequence number will be out of sync after some time running the simulator
 2. The fix message return from the simulator might not get recognized by your fix adapter / client. 
 3. You need to find out why
