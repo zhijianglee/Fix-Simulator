@@ -55,12 +55,12 @@ def get_amendment_request(msg_dict, sequence_number, conn):
 
 
 def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
-    cum_quantity = int(databaseconnector.getSingleResultFromDB(
-        "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'"))
+    cum_quantity = int(float(databaseconnector.getSingleResultFromDB(
+        "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'")))
     output_to_file_log_debug(cum_quantity)
 
-    original_quantity = int(databaseconnector.getSingleResultFromDB(
-        "SELECT ORDER_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'"))
+    original_quantity = int(float(databaseconnector.getSingleResultFromDB(
+        "SELECT ORDER_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'")))
 
     output_to_file_log_debug(original_quantity)
     remaining_quantity = 0
@@ -152,11 +152,11 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
 
     }
     sequence_number += 1
-    fix_message = build_fix_message(response_fields_pending_replace)
+    fix_message = build_fix_message(response_fields_replaced)
     order_amendment_related_fm.append(fix_message)
 
     conn.send(fix_message.encode('ascii'))
-    global_list.append(build_fix_message(response_fields_replaced))
+    global_list.append(fix_message)
 
     output_to_file_log_debug('After Amendment: Remaining Qty :' + str(remaining_quantity))
 

@@ -58,6 +58,18 @@ def send_cancellation(order, sequence_number, conn):
     security_id = (databaseconnector.getSingleResultFromDB(
         "SELECT SECURITY_ID FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
 
+    handle_inst = (databaseconnector.getSingleResultFromDB(
+        "SELECT HANDLE_INST FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+
+    id_source = (databaseconnector.getSingleResultFromDB(
+        "SELECT ID_SOURCE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+
+    if order.HandlInst is None:
+        order.HandlInst = handle_inst
+
+    if order.id_source is None:
+        order.id_source = id_source
+
     pending_cancel_response_fields = {
         "8": "FIX.4.2",
         '9': '0',
@@ -70,7 +82,7 @@ def send_cancellation(order, sequence_number, conn):
         "151": str(remaining_qty),
         "17": str(random.randint(100000, 999999)),
         "20": str(ExecTransType.New.value),
-        "21": str(order.HandlInst),
+        "21": str(order.handle_inst),
         "22": str(order.id_source),
         "31": "0.0000",
 
@@ -85,6 +97,7 @@ def send_cancellation(order, sequence_number, conn):
         "44": str(price),
         "48": str(order.Symbol),
         "49": configs.get('simulator_comp_id').data,
+        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
         "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
         "54": str(order.Side),
         "55": str(order.Symbol),
@@ -96,10 +109,10 @@ def send_cancellation(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
-    fix_message=build_fix_message(pending_cancel_response_fields)
+    fix_message = build_fix_message(pending_cancel_response_fields)
     order_cancel_related_fm.append(fix_message)
     conn.send(fix_message.encode('ascii'))
-    global_list.append(build_fix_message(pending_cancel_response_fields))
+    global_list.append(fix_message)
     sequence_number += 1
 
     cancelled_response_fields = {
@@ -140,7 +153,7 @@ def send_cancellation(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
-    fix_message = build_fix_message(pending_cancel_response_fields)
+    fix_message = build_fix_message(cancelled_response_fields)
     order_cancel_related_fm.append(fix_message)
     conn.send(fix_message.encode('ascii'))
     sequence_number += 1
