@@ -183,6 +183,8 @@ class FIXSimulator:
 
     def create_logon_response(self):
         global_list.clear()
+        self.clear_message_log_file()
+        self.sequence_number = 1
         response_fields = {
             '8': 'FIX.4.2',
             '9': '0',
@@ -364,6 +366,8 @@ class FIXSimulator:
                         output_to_file_log_debug(f"Message with sequence number {seq_no} not found in message_log.")
 
     def regular_heartbeat(self):
+        heart_beat = int(configs.get('heartbeat').data)
+
         while True:
             with self.lock:
                 response_fields = {
@@ -378,7 +382,7 @@ class FIXSimulator:
                     '52': time.strftime("%Y%m%d-%H:%M:%S.000"),
                 }
                 self.send_message(response_fields)
-            time.sleep(60)  # Send a heartbeat every 30 seconds
+            time.sleep(heart_beat)  # Send a heartbeat every 30 seconds
 
 
 if __name__ == "__main__":
