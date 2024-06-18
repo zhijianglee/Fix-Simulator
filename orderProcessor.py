@@ -52,6 +52,7 @@ class Order:
         self.remaining_quantity = 0
         self.executed_quantity = 0
         self.filled_quantity = 0
+        self.last_price = 0
 
 
 def handle_order(msg_dict, sequence_number, conn):
@@ -185,36 +186,66 @@ def send_order_confirmation(order, sequence_number, conn):
     return sequence_number
 
 
-def send_partial_fills(order, sequence_number, conn):
-    order_qty = float(order.OrderQty)  # Convert to float for arithmetic operations
-    partial_fill_percentage = int(configs.get('partial_fill_percentage').data)  # Retrieve the percentage
+def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0):
+    output_to_file_log_debug('Order Quantity: ' + order.OrderQty)
 
-    # Calculate the target filled quantity
-    target_filled_quantity = (partial_fill_percentage / 100) * order_qty
+    target_filled_quantity = 0
+    partial_fill_percentage = 0
+    remaining_qty = 0
+    old_price = order.last_price
+    #Qty to fill equals 0 means this order is not coming from amendment
+    if qty_to_fill == 0:
+        order_qty = float(order.OrderQty)  # Convert to float for arithmetic operations
+        output_to_file_log_debug('Order Quantity: ' + str(order_qty))
+        partial_fill_percentage = int(configs.get('partial_fill_percentage').data)  # Retrieve the percentage
+        target_filled_quantity = (partial_fill_percentage / 100) * order_qty
+        remaining_qty = int(order.OrderQty) - target_filled_quantity
 
-    fills_frequency_in_second = int(configs.get('fills_frequency_in_second').data)
-    fill_quantity_per_frequency = int(configs.get('fill_quantity_per_frequency').data)
+    else:  # This order is coming from amendment
+        qty_to_fill = order.remaining_quantity
+        output_to_file_log_debug('------- Partial Fill after Amendment --------')
+        partial_fill_percentage = int(configs.get('partial_fill_percentage').data)  # Retrieve the percentage
+        target_filled_quantity = (partial_fill_percentage / 100) * float(qty_to_fill)
+        remaining_qty = qty_to_fill - target_filled_quantity
+
     average_filled_price = 0
-    filled_quantity = 0
+
     cumulative_filled_quantity = int(order.executed_quantity)
-    remaining_qty = -1
 
-    output_to_file_log_debug('Target to fill qty: ')
-    output_to_file_log_debug(target_filled_quantity)
+    output_to_file_log_debug('Target to fill qty: ' + str(target_filled_quantity))
 
-    remaining_qty = int(order.OrderQty) - target_filled_quantity
+    #Initializing last filed price variable
     last_price = 0
 
     cumulative_filled_quantity += target_filled_quantity
+    output_to_file_log_debug('New Cumm Filled Qty: ' + str(cumulative_filled_quantity))
 
+    #If the order is Limit order type
     if order.OrdType == '2':
-        average_filled_price = order.Price
+        #If the order is not coming from amendment
+        if old_price == 0:
+            average_filled_price = float(order.Price)  #Just use the price coming from fix message
+            last_price = float(order.Price)
+
+        else:  # This order is coming from amendmet, so need to recalculate the average filled price
+            average_filled_price = (((float(order.executed_quantity) * float(old_price)) + (
+                    float(target_filled_quantity) * float(order.Price))) /
+                                    float(cumulative_filled_quantity))
+            last_price = float(order.Price)
+    # This order is market type order
     elif order.OrdType == '1':
-        average_filled_price = 0
         if configs.get('market_order_use_real_price').data == 'true':
             last_price = databaseconnector.getSingleResultFromDB(
                 "SELECT LAST_DONE_PRICE  FROM COUNTER WHERE COUNTER_CODE=" + order.Symbol)
-            average_filled_price = (last_price * cumulative_filled_quantity) / cumulative_filled_quantity
+            if old_price == 0:
+                average_filled_price = (float(last_price) * float(cumulative_filled_quantity)) / float(
+                    cumulative_filled_quantity)
+
+            else:
+                average_filled_price = (
+                        ((float(last_price) * float(target_filled_quantity)) + (
+                                float(old_price) * float(order.executed_quantity)))
+                        / float(cumulative_filled_quantity))
         else:
             last_price = 10
             average_filled_price = (last_price * cumulative_filled_quantity) / cumulative_filled_quantity
@@ -222,8 +253,8 @@ def send_partial_fills(order, sequence_number, conn):
     order.LastMkt = str(order.ExDestination)
     response_fields = {
         "8": "FIX.4.2",
-        "35": str(MsgType.Execution_Report.value),
         '9': '0',
+        "35": str(MsgType.Execution_Report.value),
         "11": str(order.ClOrdID),
         "29": str(LastCapacity.Agent.value),
         "1": str(order.Account),
@@ -237,7 +268,7 @@ def send_partial_fills(order, sequence_number, conn):
         "22": str(order.id_source),
         "30": str(order.LastMkt),
         "31": str(last_price),
-        "32": str(target_filled_quantity),
+        "32": str(int(target_filled_quantity)),
         "34": str(sequence_number),
         "37": str(random.randint(100000, 999999)),
         "38": str(order.OrderQty),
@@ -273,15 +304,19 @@ def send_partial_fills(order, sequence_number, conn):
 
     databaseconnector.doInsert(
         "UPDATE SIMULATOR_RECORDS SET CUMULATIVE_FILLED_QUANTITY ='" + str(
-            cumulative_filled_quantity) + "' WHERE ORDER_ID =" + "'" + str(
+            int(cumulative_filled_quantity)) + "' WHERE ORDER_ID =" + "'" + str(
             order.ClOrdID) + "'")
 
     databaseconnector.doInsert(
-        "UPDATE SIMULATOR_RECORDS SET REMAINING_QTY ='" + str(remaining_qty) + "' WHERE ORDER_ID ='" + str(
+        "UPDATE SIMULATOR_RECORDS SET REMAINING_QTY ='" + str(int(remaining_qty)) + "' WHERE ORDER_ID ='" + str(
             order.ClOrdID) + "'")
 
     databaseconnector.doInsert(
         "UPDATE SIMULATOR_RECORDS SET AVGPRICE ='" + str(average_filled_price) + "' WHERE ORDER_ID ='" + str(
+            order.ClOrdID) + "'")
+
+    databaseconnector.doInsert(
+        "UPDATE SIMULATOR_RECORDS SET LAST_PRICE ='" + str(last_price) + "' WHERE ORDER_ID ='" + str(
             order.ClOrdID) + "'")
 
     databaseconnector.doInsert(
@@ -302,16 +337,23 @@ def send_partial_fills(order, sequence_number, conn):
     return sequence_number
 
 
-def send_full_fill(order, sequence_number, conn):
+def send_full_fill(order, sequence_number, conn, target_filled_qty=0, old_price=0):
     average_filled_price = 0
+    old_price = order.last_price
 
-    last_price = 0
-    quantity_last_fill = int(order.OrderQty)
-    filled_quantity = (int(order.OrderQty) + int(order.executed_quantity))
+    quantity_last_fill = 0
+    if target_filled_qty == 0:
+        quantity_last_fill = int(order.OrderQty)
+    else:
+        target_filled_qty = order.remaining_quantity
+        quantity_last_fill = target_filled_qty
+
+    filled_quantity = (int(order.OrderQty) + target_filled_qty)
+
     remaining_qty = 0
-
     if order.OrdType == '2':
         average_filled_price = order.Price
+        last_price = order.Price
     elif order.OrdType == '1':
         average_filled_price = 0
         if configs.get('market_order_use_real_price').data == 'true':
@@ -319,6 +361,7 @@ def send_full_fill(order, sequence_number, conn):
                 "SELECT LAST_DONE_PRICE  FROM COUNTER WHERE COUNTER_CODE=" + order.Symbol)
         else:
             average_filled_price = 10
+            last_price = order.Price
     order.LastMkt = str(order.ExDestination)
 
     response_fields = {
@@ -381,6 +424,10 @@ def send_full_fill(order, sequence_number, conn):
 
     databaseconnector.doInsert(
         "UPDATE SIMULATOR_RECORDS SET AVGPRICE ='" + str(average_filled_price) + "' WHERE ORDER_ID ='" + str(
+            order.ClOrdID) + "'")
+
+    databaseconnector.doInsert(
+        "UPDATE SIMULATOR_RECORDS SET LAST_PRICE ='" + str(last_price) + "' WHERE ORDER_ID ='" + str(
             order.ClOrdID) + "'")
 
     return sequence_number

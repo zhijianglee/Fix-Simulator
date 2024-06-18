@@ -82,7 +82,7 @@ def send_cancellation(order, sequence_number, conn):
         "151": str(remaining_qty),
         "17": str(random.randint(100000, 999999)),
         "20": str(ExecTransType.New.value),
-        "21": str(order.handle_inst),
+        "21": str(order.HandlInst),
         "22": str(order.id_source),
         "31": "0.0000",
 
