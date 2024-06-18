@@ -2,6 +2,8 @@ import oracledb
 from flask import json, jsonify
 from jproperties import Properties
 
+from write_to_log import output_to_file_log_debug, output_to_file_log_error
+
 configs = Properties()
 with open('db.properties', 'rb') as config_file:
     configs.load(config_file)
@@ -34,31 +36,32 @@ def doInsert(query):
     try:
         connection = oracledb.connect(user=username, host=hostname, password=password, sid=sid, port=port)
         cursor = connection.cursor()
-        print(query)
+        output_to_file_log_debug(query)
         cursor.execute(query)
         connection.commit()
-        print("Data inserted successfully.")
+        output_to_file_log_debug("Data inserted successfully.")
     except oracledb.DatabaseError as e:
-        print(f"Database error: {e}")
+        output_to_file_log_error(f"Database error: {e}")
 
 
 def getSingleResultFromDB(query):
     try:
         connection = oracledb.connect(user=username, host=hostname, password=password, sid=sid, port=port)
         cursor = connection.cursor()
-        print(query)
+        output_to_file_log_debug(query)
         cursor.execute(query)
         result = cursor.fetchone()
         cursor.close()
         connection.close()
 
         if result:
+            output_to_file_log_debug(result)
             return result[0]
         else:
             return 'No data found'
 
     except Exception as e:
-        print(f"Error: {e}")
+        output_to_file_log_error(f"Error: {e}")
 
 
 def getResultFromDB(query):

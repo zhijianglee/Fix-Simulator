@@ -68,9 +68,9 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     last_price = float((databaseconnector.getSingleResultFromDB(
         "SELECT LAST_PRICE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
 
-    order.last_price=last_price
+    order.last_price = last_price
 
-    oirigin_remaining_qty = int(float(databaseconnector.getSingleResultFromDB(
+    origin_remaining_qty = int(float(databaseconnector.getSingleResultFromDB(
         "SELECT REMAINING_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
 
     origin_order_type = databaseconnector.getSingleResultFromDB(
@@ -92,7 +92,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "57": str(order.SenderSubID),
         "128": str(order.OnBehalfOfCompID),
         "150": str(ExecType.Pending_Replace.value),
-        "151": str(oirigin_remaining_qty),
+        "151": str(origin_remaining_qty),
         "41": str(ori_order_id),
         "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
         "21": str(order.HandlInst),
@@ -200,8 +200,8 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     order.executed_quantity = int((databaseconnector.getSingleResultFromDB(
         "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
 
-    output_to_file_log_debug('Remaining Quantity to Get Filled: '+str(order.remaining_quantity))
-    output_to_file_log_debug('Current Executed Qty: '+str(order.executed_quantity))
+    output_to_file_log_debug('Remaining Quantity to Get Filled: ' + str(order.remaining_quantity))
+    output_to_file_log_debug('Current Executed Qty: ' + str(order.executed_quantity))
     output_to_file_log_debug('Current Executed Qty Last Price: ' + str(last_price))
 
     if int(configs.get('reject_min_qty').data) <= new_remaining_quantity <= int(configs.get('reject_max_qty').data):
@@ -210,7 +210,8 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     elif (int(configs.get('fully_fill_min_qty').data) <= new_remaining_quantity <=
           int(configs.get('fully_fill_max_qty').data)):
         output_to_file_log_debug('Send Full Fill')
-        sequence_number = orderProcessor.send_full_fill(order, sequence_number, conn,order.remaining_quantity,float(last_price))
+        sequence_number = orderProcessor.send_full_fill(order, sequence_number, conn, order.remaining_quantity,
+                                                        float(last_price))
     elif int(configs.get('partial_fill_min_qty').data) <= new_remaining_quantity:
         output_to_file_log_debug('Send PF')
         sequence_number = orderProcessor.send_partial_fills(order, sequence_number, conn, order.remaining_quantity,

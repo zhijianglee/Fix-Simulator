@@ -1,3 +1,11 @@
+# This is the main py file for the simulator. The simulator is run using run_server which was called from
+# api_service.apy. In the run server it will keep listen for connection / fix messages
+
+# For every fix messages received, it will be passed to handle_connection which will then pass the message to
+# handle_message
+
+# handle_message is the method containing conditions based on Msg_Type on how the fix message should be handled.
+
 import write_to_log
 import os
 import socket
@@ -15,7 +23,7 @@ import sequence_manager
 from orderProcessor import *
 from write_to_log import *
 from builder import *
-from globals import global_list, global_seq_num, retrieve_messages
+from globals import *
 from sequencehandler import save_sequence_number, save_message_log
 
 configs = Properties()
@@ -74,9 +82,9 @@ class FIXSimulator:
         self.sequence_number = load_sequence_number()
         self.message_log = []
         self.lock = threading.Lock()
-        self.clear_message_log_file()
 
-    def clear_message_log_file(self):
+    @staticmethod
+    def clear_message_log_file():
         # Clear the contents of message_log.json
         with open('message_log.json', 'w') as file:
             json.dump([], file)
@@ -140,10 +148,12 @@ class FIXSimulator:
             output_to_file_log_debug('Correct Target Comp ID used by client')
 
             if msg_type == 'A':
+                # Tag 141 means reset sequence number. When either party receive this, both parties must reset
+                # sequence number.
                 reset_seq_num_flag = msg_dict.get('141')
+
                 if reset_seq_num_flag == 'Y':
-                    self.sequence_number = 1
-                    global_list.clear()
+                    self.sequence_number = 1  # Resetting sequence number to 1
                     output_to_file_log_debug('Sequence number reset due to ResetSeqNumFlag')
                 return self.create_logon_response()
 
@@ -153,6 +163,9 @@ class FIXSimulator:
 
             elif msg_type == 'D':
                 updated_sequence_number = orderProcessor.handle_order(msg_dict, self.sequence_number, conn)
+
+                # Each method will return with updated sequence number and the sequence number will be synced with
+                # self and updated in file.
                 self.sequence_number = updated_sequence_number
                 save_sequence_number(self.sequence_number)
 
@@ -183,8 +196,8 @@ class FIXSimulator:
 
     def create_logon_response(self):
         global_list.clear()
-        self.clear_message_log_file()
-        self.sequence_number = 1
+        self.clear_message_log_file()  # Clearing the messages log file
+        self.sequence_number = 1  # Ensuring sequence number is set to 1
         response_fields = {
             '8': 'FIX.4.2',
             '9': '0',
@@ -194,7 +207,8 @@ class FIXSimulator:
             '43': 'Y',
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
-            '34': str(self.sequence_number),  # Message sequence number
+            '34': str(self.sequence_number),  # Message sequence number. This will send sequence number 1 back to
+            # client.
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '98': '0',  # EncryptMethod
             '108': '60',  # HeartBtInt
@@ -217,7 +231,7 @@ class FIXSimulator:
             "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
-            '58': 'LOgging out',
+            '58': 'Logging out',
             '34': str(self.sequence_number),  # Message sequence number
             '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '98': '0',  # EncryptMethod
@@ -349,8 +363,6 @@ class FIXSimulator:
         # Extract the sequence numbers from the Resend Request
         begin_seq_no = int(msg_dict['7'])
         end_seq_no = int(msg_dict['16'])
-
-        start_index = begin_seq_no - 1
 
         if end_seq_no == 0:
             send_sequence_reset(self.conn, begin_seq_no, self.senderCompID, self.targetCompID)

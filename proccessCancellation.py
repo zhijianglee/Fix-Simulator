@@ -40,35 +40,44 @@ def cancel_request(msg_dict, sequence_number, conn):
 
 def send_cancellation(order, sequence_number, conn):
     cumulative_quantity = (databaseconnector.getSingleResultFromDB(
-        "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
     remaining_qty = (databaseconnector.getSingleResultFromDB(
-        "SELECT REMAINING_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT REMAINING_QTY FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
     order_qty = (databaseconnector.getSingleResultFromDB(
-        "SELECT ORDER_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT ORDER_QTY FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
     avg_price = (databaseconnector.getSingleResultFromDB(
-        "SELECT AVGPRICE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT AVGPRICE FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
+
+    output_to_file_log_debug('Avg Price froM DB' + avg_price)
+
     ord_type = (databaseconnector.getSingleResultFromDB(
-        "SELECT ORDER_TYPE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT ORDER_TYPE FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
     currency = (databaseconnector.getSingleResultFromDB(
-        "SELECT CURRENCY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT CURRENCY FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
     price = (databaseconnector.getSingleResultFromDB(
-        "SELECT LIMIT_PRICE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT LIMIT_PRICE FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
     time_in_force = (databaseconnector.getSingleResultFromDB(
-        "SELECT TIME_IN_FORCE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT TIME_IN_FORCE FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
     security_id = (databaseconnector.getSingleResultFromDB(
-        "SELECT SECURITY_ID FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT SECURITY_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
 
     handle_inst = (databaseconnector.getSingleResultFromDB(
-        "SELECT HANDLE_INST FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT HANDLE_INST FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
 
     id_source = (databaseconnector.getSingleResultFromDB(
-        "SELECT ID_SOURCE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'"))
+        "SELECT ID_SOURCE FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
 
     if order.HandlInst is None:
         order.HandlInst = handle_inst
 
     if order.id_source is None:
         order.id_source = id_source
+
+    output_to_file_log_debug('Avg Price before rounding '+avg_price)
+
+    avg_price = round(float(avg_price),3)
+
+    output_to_file_log_debug('Avg Price after rounding ' + str(avg_price))
 
     pending_cancel_response_fields = {
         "8": "FIX.4.2",
@@ -85,7 +94,6 @@ def send_cancellation(order, sequence_number, conn):
         "21": str(order.HandlInst),
         "22": str(order.id_source),
         "31": "0.0000",
-
         "32": "0",
         "34": str(sequence_number),
         "37": str(random.randint(100000, 999999)),
@@ -160,6 +168,6 @@ def send_cancellation(order, sequence_number, conn):
 
     databaseconnector.doInsert(
         "UPDATE SIMULATOR_RECORDS SET EXECTRANSTYPE=" + str(ExecType.Canceled.value) + ", OrdStatus=" + str(
-            OrdStatus.Canceled.value) + " WHERE ORIGCLORDID='" + str(order.orgin_ord_id) + "'")
+            OrdStatus.Canceled.value) + " WHERE ORDER_ID='" + str(order.orgin_ord_id) + "'")
 
     return sequence_number

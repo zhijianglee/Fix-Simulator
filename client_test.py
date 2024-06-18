@@ -4,6 +4,8 @@ import time
 from builder import build_fix_message
 
 
+# Simple test class to verify if basic stuffs are working
+
 def calculate_checksum(message):
     checksum = sum(ord(char) for char in message) % 256
     return str(checksum).zfill(3)
@@ -86,7 +88,6 @@ def main():
 
             amend_response = receive_message(sock)
             print(f"Received amendment response: {amend_response}")
-
 
             # Send order cancel message
             order_cancel_message = create_order_cancel_request(sender_comp_id, target_comp_id, proposed_order_id,

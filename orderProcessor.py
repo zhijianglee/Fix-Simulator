@@ -250,6 +250,8 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
             last_price = 10
             average_filled_price = (last_price * cumulative_filled_quantity) / cumulative_filled_quantity
 
+    average_filled_price = round(float(average_filled_price), 3)
+
     order.LastMkt = str(order.ExDestination)
     response_fields = {
         "8": "FIX.4.2",
@@ -338,32 +340,42 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
 
 
 def send_full_fill(order, sequence_number, conn, target_filled_qty=0, old_price=0):
+    global last_price
     average_filled_price = 0
     old_price = order.last_price
+    filled_quantity = 0
 
     quantity_last_fill = 0
     if target_filled_qty == 0:
         quantity_last_fill = int(order.OrderQty)
+        filled_quantity = quantity_last_fill
     else:
         target_filled_qty = order.remaining_quantity
         quantity_last_fill = target_filled_qty
-
-    filled_quantity = (int(order.OrderQty) + target_filled_qty)
+        filled_quantity = quantity_last_fill + order.executed_quantity
 
     remaining_qty = 0
+
+    # If this is limit order
     if order.OrdType == '2':
         average_filled_price = order.Price
         last_price = order.Price
+
+    # If this is market order
     elif order.OrdType == '1':
         average_filled_price = 0
         if configs.get('market_order_use_real_price').data == 'true':
-            average_filled_price = databaseconnector.getSingleResultFromDB(
-                "SELECT LAST_DONE_PRICE  FROM COUNTER WHERE COUNTER_CODE=" + order.Symbol)
+            last_price = databaseconnector.getSingleResultFromDB(
+                "SELECT LAST_DONE_PRICE FROM COUNTER WHERE COUNTER_CODE=" + order.Symbol)
+            order.last_price = last_price
+            average_filled_price = ((order.executed_quantity * old_price) + (
+                    quantity_last_fill * last_price)) / filled_quantity
         else:
-            average_filled_price = 10
-            last_price = order.Price
-    order.LastMkt = str(order.ExDestination)
+            last_price = 10
+            average_filled_price = last_price
 
+    order.LastMkt = str(order.ExDestination)
+    average_filled_price = round(average_filled_price, 3)
     response_fields = {
         "8": "FIX.4.2",
         '9': '0',
