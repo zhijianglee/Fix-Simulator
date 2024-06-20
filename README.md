@@ -5,7 +5,7 @@ This is a fix simulator using FIX 4.2 protocol built by relying on ChatGPT almos
 It has some basic functionalities such as responding to login and order requests **(covered 35=D, 35=F and 35G)**
 Development is still in progress. However, this simulator is function partially. </br>
 
-This simulator also comes with a flask application containing several API endpoints. **However, only /fix message/parse_to_json is working**. 
+This simulator also comes with a flask application containing several API endpoints. **However, only /fix message/parse_to_json and /send_message is working**. 
 
 # Set Up
 
@@ -37,6 +37,16 @@ Simulator.properties containing list of configured properties. Only below are wo
 
 1. Ensure the below modules are being installed Refer to requirements.txt
 2. Start the simulator by using apiservice.py
+
+# Using /send_message
+1. You can use this to send fix message to connected client by passing in your desired tags in a json object form
+
+### These tags will be automatically added. Do not include them
+
+1. 49,17,37,52,60,34,10
+2. Remember to include 9 with 0 length in your json request body. It will get recalculated again. 
+
+
 
 # Known Bugs and Pull Requests are Welcomed
 1. Sequence number will be out of sync after some time running the simulator
