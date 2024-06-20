@@ -223,6 +223,7 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
     #If the order is Limit order type
     if order.OrdType == '2':
         #If the order is not coming from amendment
+        output_to_file_log_info('Partial Fill Limit Order')
         if old_price == 0:
             average_filled_price = float(order.Price)  #Just use the price coming from fix message
             last_price = float(order.Price)
@@ -234,9 +235,10 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
             last_price = float(order.Price)
     # This order is market type order
     elif order.OrdType == '1':
+        output_to_file_log_info('Partial Fill Market Order')
         if configs.get('market_order_use_real_price').data == 'true':
-            last_price = databaseconnector.getSingleResultFromDB(
-                "SELECT LAST_DONE_PRICE  FROM COUNTER WHERE COUNTER_CODE=" + order.Symbol)
+            last_price = float(databaseconnector.getSingleResultFromDB(
+                "SELECT LAST_DONE_PRICE  FROM COUNTER WHERE COUNTER_CODE=" + order.Symbol))
             if old_price == 0:
                 average_filled_price = (float(last_price) * float(cumulative_filled_quantity)) / float(
                     cumulative_filled_quantity)
@@ -247,10 +249,13 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
                                 float(old_price) * float(order.executed_quantity)))
                         / float(cumulative_filled_quantity))
         else:
-            last_price = 10
+            last_price = 10.000
             average_filled_price = (last_price * cumulative_filled_quantity) / cumulative_filled_quantity
+            average_filled_price = round(float(average_filled_price), 3)
 
     average_filled_price = round(float(average_filled_price), 3)
+
+    output_to_file_log_debug(str(average_filled_price))
 
     order.LastMkt = str(order.ExDestination)
     response_fields = {
@@ -290,7 +295,7 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
         "58": str(configs.get('tag58_order_executed').data),
         "59": str(order.TimeInForce),
         "75": datetime.now().strftime('%Y%m%d'),
-        "6": str(average_filled_price),
+        "6": "{:.3f}".format(average_filled_price),
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
@@ -340,7 +345,6 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
 
 
 def send_full_fill(order, sequence_number, conn, target_filled_qty=0, old_price=0):
-    global last_price
     average_filled_price = 0
     old_price = order.last_price
     filled_quantity = 0
@@ -365,17 +369,18 @@ def send_full_fill(order, sequence_number, conn, target_filled_qty=0, old_price=
     elif order.OrdType == '1':
         average_filled_price = 0
         if configs.get('market_order_use_real_price').data == 'true':
-            last_price = databaseconnector.getSingleResultFromDB(
-                "SELECT LAST_DONE_PRICE FROM COUNTER WHERE COUNTER_CODE=" + order.Symbol)
+            last_price = float(databaseconnector.getSingleResultFromDB(
+                "SELECT LAST_DONE_PRICE FROM COUNTER WHERE COUNTER_CODE=" + order.Symbol))
             order.last_price = last_price
             average_filled_price = ((order.executed_quantity * old_price) + (
-                    quantity_last_fill * last_price)) / filled_quantity
+                        quantity_last_fill * last_price)) / filled_quantity
         else:
-            last_price = 10
+            last_price = 10.00
+            order.last_price = last_price
             average_filled_price = last_price
 
     order.LastMkt = str(order.ExDestination)
-    average_filled_price = round(average_filled_price, 3)
+    average_filled_price = round(float(average_filled_price), 3)
     response_fields = {
         "8": "FIX.4.2",
         '9': '0',
@@ -392,7 +397,7 @@ def send_full_fill(order, sequence_number, conn, target_filled_qty=0, old_price=
         "20": str(ExecTransType.Status.value),
         "21": str(order.HandlInst),
         "22": str(order.id_source),
-        "31": str(last_price),
+        "31": str(order.last_price),
         "32": str(quantity_last_fill),
         "34": str(sequence_number),
         "37": str(random.randint(100000, 999999)),
@@ -412,7 +417,7 @@ def send_full_fill(order, sequence_number, conn, target_filled_qty=0, old_price=
         "58": str(configs.get('tag58_order_executed').data),
         "59": str(order.TimeInForce),
         "75": datetime.now().strftime('%Y%m%d'),
-        "6": str(average_filled_price),
+        "6": "{:.3f}".format(average_filled_price),
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }

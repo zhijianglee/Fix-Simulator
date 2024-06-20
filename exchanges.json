@@ -1,0 +1,87 @@
+[
+    {
+        "exchange_code": "L",
+        "name": "London Stock Exchange",
+        "closing_time": "16:30",
+        "time_zone": "Europe/London"
+    },
+    {
+        "exchange_code": "SI",
+        "name": "Singapore Stock Exchange",
+        "closing_time": "17:00",
+        "time_zone": "Asia/Singapore"
+    },
+    {
+        "exchange_code": "N",
+        "name": "New York Stock Exchange",
+        "closing_time": "16:00",
+        "time_zone": "America/New_York"
+    },
+    {
+        "exchange_code": "O",
+        "name": "NASDAQ",
+        "closing_time": "16:00",
+        "time_zone": "America/New_York"
+    },
+
+    {
+        "exchange_code": "T",
+        "name": "Tokyo Stock Exchange",
+        "closing_time": "15:00",
+        "time_zone": "Asia/Tokyo"
+    },
+    {
+        "exchange_code": "HK",
+        "name": "Hong Kong Stock Exchange",
+        "closing_time": "16:00",
+        "time_zone": "Asia/Hong_Kong"
+    },
+    {
+        "exchange_code": "SS",
+        "name": "Shanghai Stock Exchange",
+        "closing_time": "15:00",
+        "time_zone": "Asia/Shanghai"
+    },
+    {
+        "exchange_code": "AX",
+        "name": "Australian Securities Exchange",
+        "closing_time": "16:10",
+        "time_zone": "Australia/Sydney"
+    },
+    {
+        "exchange_code": "F",
+        "name": "Frankfurt Stock Exchange",
+        "closing_time": "17:30",
+        "time_zone": "Europe/Berlin"
+    },
+    {
+        "exchange_code": "PAR",
+        "name": "Euronext Paris",
+        "closing_time": "17:30",
+        "time_zone": "Europe/Paris"
+    },
+     {
+        "exchange_code": "PA",
+        "name": "Paris Stock Exchange",
+        "closing_time": "17:30",
+        "time_zone": "Europe/Paris"
+    },
+    {
+        "exchange_code": "SW",
+        "name": "Swiss Exchange",
+        "closing_time": "17:30",
+        "time_zone": "Europe/Zurich"
+    },
+    {
+        "exchange_code": "A",
+        "name": "NYSE American (formerly AMEX)",
+        "closing_time": "16:00",
+        "time_zone": "America/New_York"
+    },
+    {
+        "exchange_code": "BX",
+        "name": "Euronext Brussels",
+        "closing_time": "17:30",
+        "time_zone": "Europe/Brussels"
+    }
+]

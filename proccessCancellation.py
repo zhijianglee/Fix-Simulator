@@ -73,11 +73,14 @@ def send_cancellation(order, sequence_number, conn):
     if order.id_source is None:
         order.id_source = id_source
 
-    output_to_file_log_debug('Avg Price before rounding '+avg_price)
+    output_to_file_log_debug('Avg Price before rounding ' + avg_price)
 
-    avg_price = round(float(avg_price),3)
+    avg_price = round(float(avg_price), 3)
 
     output_to_file_log_debug('Avg Price after rounding ' + str(avg_price))
+
+    if order.OrdType == '1':
+        avg_price = 0.00
 
     pending_cancel_response_fields = {
         "8": "FIX.4.2",
@@ -117,6 +120,10 @@ def send_cancellation(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
+
+    if ord_type == '1':
+        pending_cancel_response_fields.pop('44')
+
     fix_message = build_fix_message(pending_cancel_response_fields)
     order_cancel_related_fm.append(fix_message)
     conn.send(fix_message.encode('ascii'))
@@ -161,6 +168,9 @@ def send_cancellation(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
+    if ord_type == '1':
+        cancelled_response_fields.pop('44')
+
     fix_message = build_fix_message(cancelled_response_fields)
     order_cancel_related_fm.append(fix_message)
     conn.send(fix_message.encode('ascii'))

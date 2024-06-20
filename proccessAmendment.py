@@ -55,6 +55,8 @@ def get_amendment_request(msg_dict, sequence_number, conn):
 
 
 def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
+    price = 0.00
+
     cum_quantity = int((databaseconnector.getSingleResultFromDB(
         "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'")))
     output_to_file_log_debug(cum_quantity)
@@ -62,15 +64,16 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     original_quantity = int((databaseconnector.getSingleResultFromDB(
         "SELECT ORDER_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'")))
 
-    price = float((databaseconnector.getSingleResultFromDB(
-        "SELECT LIMIT_PRICE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
+    if order.OrdType == 2 or order.OrdType == 4:
+        price = float((databaseconnector.getSingleResultFromDB(
+            "SELECT LIMIT_PRICE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
 
     last_price = float((databaseconnector.getSingleResultFromDB(
         "SELECT LAST_PRICE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
 
     order.last_price = last_price
 
-    origin_remaining_qty = int(float(databaseconnector.getSingleResultFromDB(
+    oirigin_remaining_qty = int(float(databaseconnector.getSingleResultFromDB(
         "SELECT REMAINING_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
 
     origin_order_type = databaseconnector.getSingleResultFromDB(
@@ -80,6 +83,9 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     output_to_file_log_debug("New Quantity: " + str(new_quantity))
 
     output_to_file_log_debug('Constructing pending replace response fields')
+    if order.OrdType == '1':
+        price = 0.00
+
     response_fields_pending_replace = {
         "8": "FIX.4.2",
         '9': '0',
@@ -92,7 +98,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "57": str(order.SenderSubID),
         "128": str(order.OnBehalfOfCompID),
         "150": str(ExecType.Pending_Replace.value),
-        "151": str(origin_remaining_qty),
+        "151": str(oirigin_remaining_qty),
         "41": str(ori_order_id),
         "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
         "21": str(order.HandlInst),
@@ -118,6 +124,8 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
+    if order.OrdType == '1':
+        response_fields_pending_replace.pop('44')
 
     sequence_number += 1
     fix_message = build_fix_message(response_fields_pending_replace)
@@ -126,6 +134,9 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     conn.send(fix_message.encode('ascii'))
 
     new_remaining_quantity = int(new_quantity) - cum_quantity
+
+    if order.OrdType == '1':
+        order.Price = 0.00
 
     response_fields_replaced = {
         "8": "FIX.4.2",
@@ -156,7 +167,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "40": str(order.OrdType),
         "59": str(order.TimeInForce),
         "44": str(order.Price),
-        "39": str(OrdStatus.Replaced.value),
+        "39": str(OrdStatus.Pending_Replace.value),
         "20": str(ExecTransType.New.value),
         "17": str(random.randint(100000, 999999)),
         "6": str(order.Price),
@@ -166,6 +177,9 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
+    if order.OrdType == '1':
+        response_fields_replaced.pop('44')
+
     sequence_number += 1
     fix_message = build_fix_message(response_fields_replaced)
     output_to_file_log_debug('Send Replaced: ' + fix_message)
@@ -176,29 +190,33 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     output_to_file_log_debug('After Amendment: Remaining Qty :' + str(new_remaining_quantity))
 
     databaseconnector.doInsert(
-        "UPDATE SIMULATOR_RECORDS SET ORDER_QTY='" + str(order.OrderQty) + "' WHERE ORIGCLORDID='" + str(
-            ori_order_id) + "'")
+        "UPDATE SIMULATOR_RECORDS SET ORDER_QTY='" + str(order.OrderQty) + "' WHERE ORDER_ID='" + str(
+            order.ClOrdID) + "'")
 
     databaseconnector.doInsert(
-        "UPDATE SIMULATOR_RECORDS SET ORDER_TYPE='" + str(order.OrdType) + "' WHERE ORIGCLORDID='" + str(
-            ori_order_id) + "'")
+        "UPDATE SIMULATOR_RECORDS SET ORDER_TYPE='" + str(order.OrdType) + "' WHERE ORDER_ID='" + str(
+            order.ClOrdID) + "'")
 
     databaseconnector.doInsert(
-        "UPDATE SIMULATOR_RECORDS SET LIMIT_PRICE='" + str(order.Price) + "' WHERE ORIGCLORDID='" + str(
-            ori_order_id) + "'")
+        "UPDATE SIMULATOR_RECORDS SET LIMIT_PRICE='" + str(order.Price) + "' WHERE ORDER_ID='" + str(
+            order.ClOrdID) + "'")
 
     databaseconnector.doInsert(
-        "UPDATE SIMULATOR_RECORDS SET PRICE='" + str(order.Price) + "' WHERE ORIGCLORDID='" + str(
-            ori_order_id) + "'")
+        "UPDATE SIMULATOR_RECORDS SET PRICE='" + str(order.Price) + "' WHERE ORDER_ID='" + str(
+            order.ClOrdID) + "'")
 
     databaseconnector.doInsert(
-        "UPDATE SIMULATOR_RECORDS SET REMAINING_QTY='" + str(new_remaining_quantity) + "' WHERE ORIGCLORDID='" + str(
-            ori_order_id) + "'")
+        "UPDATE SIMULATOR_RECORDS SET REMAINING_QTY='" + str(new_remaining_quantity) + "' WHERE ORDER_ID='" + str(
+            order.ClOrdID) + "'")
+
+    databaseconnector.doInsert(
+        "UPDATE SIMULATOR_RECORDS SET ORIGCLORDID='" + str(order.ClOrdID) + "' WHERE ORDER_ID='" + str(
+            order.ClOrdID) + "'")
 
     order.remaining_quantity = new_remaining_quantity
 
     order.executed_quantity = int((databaseconnector.getSingleResultFromDB(
-        "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
+        "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.ClOrdID + "'")))
 
     output_to_file_log_debug('Remaining Quantity to Get Filled: ' + str(order.remaining_quantity))
     output_to_file_log_debug('Current Executed Qty: ' + str(order.executed_quantity))

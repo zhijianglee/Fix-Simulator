@@ -2,7 +2,6 @@
 # Only need to run this to start both flask application and the simulator
 import asyncio
 
-
 from flask import Flask, request, jsonify
 import threading
 
@@ -16,7 +15,7 @@ fix_simulator = FIXSimulator()
 @app.route('/send_message', methods=['POST'])
 def send_message():
     data = request.json
-    fix_simulator.send_message(data)
+    fix_simulator.send_custom_message(data,simulator.conn)
     return jsonify({"status": "Message sent"})
 
 
@@ -35,7 +34,7 @@ def retrieve_single_order():
 @app.route('/fix message/parse_to_json', methods=['POST'])
 def decode_fix_to_json():
     data = request.json
-    fix_message_object = parse_fix_message_to_json(data.get('message'),data.get('delimiter'))
+    fix_message_object = parse_fix_message_to_json(data.get('message'), data.get('delimiter'))
     # if has_delimiters(data.get('message')):
     #     print('Message got delimiter')
     #     fix_message_object = parse_fix_message(data.get('message'))
@@ -60,17 +59,17 @@ if __name__ == "__main__":
     simulator = FIXSimulator()
 
     # Start the FIXSimulator server in a separate thread
-    simulator_thread = threading.Thread(target=lambda: asyncio.run(simulator.run_server()))
+    # simulator_thread = threading.Thread(target=lambda: asyncio.run(simulator.run_server()))
+    simulator_thread = threading.Thread(target=simulator.run_server)
     simulator_thread.start()
 
     # Start the Flask application in the main thread
     flask_thread = threading.Thread(target=run_flask_app)
     flask_thread.start()
 
-    # Start a thread to send heartbeats
-    heartbeat_thread = threading.Thread(target=simulator.regular_heartbeat())
-    heartbeat_thread.start()
-
-    simulator_thread.join()
     flask_thread.join()
-    heartbeat_thread.join()
+    simulator_thread.join()
+
+
+
+
