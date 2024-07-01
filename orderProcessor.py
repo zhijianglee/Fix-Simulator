@@ -507,6 +507,10 @@ def send_rejection(order, sequence_number, conn):
         "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
+
+    if order.OrdType == '1':
+        response_fields.pop('44')
+
     sequence_number += 1
     fix_message = build_fix_message(response_fields)
     output_to_file_log_debug('Send Reject message: ' + fix_message)

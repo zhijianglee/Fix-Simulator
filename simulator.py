@@ -104,7 +104,7 @@ class FIXSimulator:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((self.host, self.port))
             s.listen()
-            write_to_log.output_to_file_log_debug(f"Listening on {self.host}:{self.port}")
+            write_to_log.output_to_file_log_debug(f"Simulator Listening on {self.host}:{self.port}")
             while True:  # Loop to keep listening for connections
                 conn, addr = s.accept()
                 with self.lock:
