@@ -1,13 +1,6 @@
-# This is the main py file for the simulator. The simulator is run using run_server which was called from
-# api_service.apy. In the run server it will keep listen for connection / fix messages
-
-# For every fix messages received, it will be passed to handle_connection which will then pass the message to
-# handle_message
-
-# handle_message is the method containing conditions based on Msg_Type on how the fix message should be handled.
-
 import random
 
+import orderProcessor
 import write_to_log
 import os
 import socket
@@ -17,7 +10,7 @@ import threading
 from jproperties import Properties
 
 import databaseconnector
-import orderProcessor
+
 import proccessAmendment
 import proccessCancellation
 import sequence_manager
@@ -104,7 +97,7 @@ class FIXSimulator:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((self.host, self.port))
             s.listen()
-            write_to_log.output_to_file_log_debug(f"Simulator Listening on {self.host}:{self.port}")
+            write_to_log.output_to_file_log_debug(f"Listening on {self.host}:{self.port}")
             while True:  # Loop to keep listening for connections
                 conn, addr = s.accept()
                 with self.lock:
@@ -152,7 +145,7 @@ class FIXSimulator:
         output_to_file_log_debug('Msg Type 35' + msg_type)
         self.targetCompID = msg_dict.get('49')
         self.senderCompID = configs.get('simulator_comp_id').data
-        #    self.senderCompID = msg_dict.get('56')
+
 
         output_to_file_log_debug(msg_dict.get('56'))
         output_to_file_log_debug(configs.get('simulator_comp_id').data)
@@ -365,15 +358,15 @@ class FIXSimulator:
             self.conn.sendall(fix_message.encode('ascii'))
             output_to_file_log_debug(f"Sent: {fix_message}")
 
-    def send_custom_message(self, response_fields, conn):
+    def send_custom_message(self, response_fields,conn):
         sequence_number = load_sequence_number()
-
         if not conn:
             output_to_file_log_debug("No client connected to send messages.")
             return
         else:
             output_to_file_log_debug("Attempting to send message.")
             with self.lock:
+
                 response_fields['49'] = configs.get('simulator_comp_id').data
                 response_fields['17'] = str(random.randint(100000, 999999))
                 response_fields['37'] = str(random.randint(100000, 999999))

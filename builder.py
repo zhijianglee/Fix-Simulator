@@ -12,8 +12,7 @@ delimiter = configs.get('delimiter').data
 
 
 def parse_fix_message(message):
-    # Split the message by the custom delimiter
-
+    # Split the message by the custom delimiter OR standard delimiter
     if delimiter in message:
         fields = message.split(delimiter)
     else:
@@ -52,15 +51,6 @@ def parse_fix_message_to_json(message, delimiter='^A'):
     return message_json
 
 
-# def parse_fix_message(message):
-#     fields = message.split('\x01')
-#     msg_dict = {}
-#     for field in fields:
-#         if field:
-#             tag, value = field.split('=')
-#             msg_dict[tag] = value
-#     return msg_dict
-
 
 def has_delimiters(message):
     return '\x01' in message
@@ -77,7 +67,9 @@ def calculate_body_length(fields):
 
 
 def calculate_checksum(message):
+    # Summation of ASCI2 values for each character in the message divide by 256 and get the remainder
     checksum = sum(ord(char) for char in message) % 256
+    # To return it as a 3 digit . Append it with leading zero because 3 digit checksum is the standard
     return str(checksum).zfill(3)
 
 
@@ -86,7 +78,7 @@ def build_fix_message(fields):
     body_length = calculate_body_length(fields)
     fields['9'] = str(body_length)
 
-    # Build the message with BodyLength included
+    # Build the message with BodyLength included. This part is for cheecksum calculation
     message_with_length = '\x01'.join(f"{key}={value}" for key, value in fields.items()) + '\x01'
 
     # Calculate the CheckSum

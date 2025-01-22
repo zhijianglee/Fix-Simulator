@@ -1,8 +1,12 @@
 from jproperties import Properties
 
 import databaseconnector
+from globals import global_list
+import write_to_log
+
 from builder import build_fix_message
 from orderProcessor import *
+
 
 configs = Properties()
 with open('simulator.properties', 'rb') as config_file:
@@ -48,7 +52,7 @@ def send_cancellation(order, sequence_number, conn):
     avg_price = (databaseconnector.getSingleResultFromDB(
         "SELECT AVGPRICE FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
 
-    output_to_file_log_debug('Avg Price froM DB' + avg_price)
+    write_to_log.output_to_file_log_debug('Avg Price froM DB' + avg_price)
 
     ord_type = (databaseconnector.getSingleResultFromDB(
         "SELECT ORDER_TYPE FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.orgin_ord_id + "'"))
@@ -73,11 +77,11 @@ def send_cancellation(order, sequence_number, conn):
     if order.id_source is None:
         order.id_source = id_source
 
-    output_to_file_log_debug('Avg Price before rounding ' + avg_price)
+    write_to_log.output_to_file_log_debug('Avg Price before rounding ' + avg_price)
 
     avg_price = round(float(avg_price), 3)
 
-    output_to_file_log_debug('Avg Price after rounding ' + str(avg_price))
+    write_to_log.output_to_file_log_debug('Avg Price after rounding ' + str(avg_price))
 
     if order.OrdType == '1':
         avg_price = 0.00

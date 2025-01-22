@@ -1,5 +1,7 @@
 import json
 
+orders_creation_related_fm = []
+
 
 def save_sequence_number(sequence_number):
     with open('sequence_number.json', 'w') as file:

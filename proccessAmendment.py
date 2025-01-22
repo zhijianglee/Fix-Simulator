@@ -2,9 +2,11 @@ from jproperties import Properties
 
 import databaseconnector
 import orderProcessor
+import write_to_log
 from builder import build_fix_message
 from globals import global_list
 from orderProcessor import *
+from proccessFills import send_full_fill, send_partial_fills
 from write_to_log import *
 
 configs = Properties()
@@ -39,7 +41,8 @@ def get_amendment_request(msg_dict, sequence_number, conn):
 
     new_order = Order(new_order_id, handle_inst, symbol, side, transact_time, new_order_qty, new_order_type,
                       new_limit_price, time_in_force, account, expire_time, client_id, None, ex_destination, last_mkt,
-                      None, client_comp_id, sender_sub_id, currency, id_source, on_behalf_of_comp_id, ori_order_id)
+                      None, client_comp_id, sender_sub_id, currency, id_source, on_behalf_of_comp_id, ori_order_id,
+                      security_id)
 
     seq_to_use = int(sequence_number)
 
@@ -59,7 +62,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
 
     cum_quantity = int((databaseconnector.getSingleResultFromDB(
         "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'")))
-    output_to_file_log_debug(cum_quantity)
+    write_to_log.output_to_file_log_debug(cum_quantity)
 
     original_quantity = int((databaseconnector.getSingleResultFromDB(
         "SELECT ORDER_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'")))
@@ -71,7 +74,12 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     last_price = float((databaseconnector.getSingleResultFromDB(
         "SELECT LAST_PRICE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
 
+    average_price = float((databaseconnector.getSingleResultFromDB(
+        "SELECT AVGPRICE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
+
     order.last_price = last_price
+
+    order.average_price = average_price
 
     oirigin_remaining_qty = int(float(databaseconnector.getSingleResultFromDB(
         "SELECT REMAINING_QTY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")))
@@ -79,10 +87,10 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     origin_order_type = databaseconnector.getSingleResultFromDB(
         "SELECT ORDER_TYPE FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + order.orgin_ord_id + "'")
 
-    output_to_file_log_debug("Original Quantity: " + str(original_quantity))
-    output_to_file_log_debug("New Quantity: " + str(new_quantity))
+    write_to_log.output_to_file_log_debug("Original Quantity: " + str(original_quantity))
+    write_to_log.output_to_file_log_debug("New Quantity: " + str(new_quantity))
 
-    output_to_file_log_debug('Constructing pending replace response fields')
+    write_to_log.output_to_file_log_debug('Constructing pending replace response fields')
     if order.OrdType == '1':
         price = 0.00
 
@@ -129,7 +137,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
 
     sequence_number += 1
     fix_message = build_fix_message(response_fields_pending_replace)
-    output_to_file_log_debug('Send Pending Amendment: ' + fix_message)
+    write_to_log.output_to_file_log_debug('Send Pending Amendment: ' + fix_message)
     order_amendment_related_fm.append(fix_message)
     conn.send(fix_message.encode('ascii'))
 
@@ -182,12 +190,12 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
 
     sequence_number += 1
     fix_message = build_fix_message(response_fields_replaced)
-    output_to_file_log_debug('Send Replaced: ' + fix_message)
+    write_to_log.output_to_file_log_debug('Send Replaced: ' + fix_message)
     order_amendment_related_fm.append(fix_message)
     conn.send(fix_message.encode('ascii'))
     global_list.append(fix_message)
 
-    output_to_file_log_debug('After Amendment: Remaining Qty :' + str(new_remaining_quantity))
+    write_to_log.output_to_file_log_debug('After Amendment: Remaining Qty :' + str(new_remaining_quantity))
 
     databaseconnector.doInsert(
         "UPDATE SIMULATOR_RECORDS SET ORDER_QTY='" + str(order.OrderQty) + "' WHERE ORDER_ID='" + str(
@@ -218,21 +226,21 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     order.executed_quantity = int((databaseconnector.getSingleResultFromDB(
         "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORDER_ID='" + order.ClOrdID + "'")))
 
-    output_to_file_log_debug('Remaining Quantity to Get Filled: ' + str(order.remaining_quantity))
-    output_to_file_log_debug('Current Executed Qty: ' + str(order.executed_quantity))
-    output_to_file_log_debug('Current Executed Qty Last Price: ' + str(last_price))
+    write_to_log.output_to_file_log_debug('Remaining Quantity to Get Filled: ' + str(order.remaining_quantity))
+    write_to_log.output_to_file_log_debug('Current Executed Qty: ' + str(order.executed_quantity))
+    write_to_log.output_to_file_log_debug('Current Executed Qty Last Price: ' + str(last_price))
 
     if int(configs.get('reject_min_qty').data) <= new_remaining_quantity <= int(configs.get('reject_max_qty').data):
-        output_to_file_log_debug('Send Rejection')
+        write_to_log.output_to_file_log_debug('Send Rejection')
         sequence_number = orderProcessor.send_rejection(order, sequence_number, conn)
     elif (int(configs.get('fully_fill_min_qty').data) <= new_remaining_quantity <=
           int(configs.get('fully_fill_max_qty').data)):
-        output_to_file_log_debug('Send Full Fill')
-        sequence_number = orderProcessor.send_full_fill(order, sequence_number, conn, order.remaining_quantity,
-                                                        float(last_price))
+        write_to_log.output_to_file_log_debug('Send Full Fill')
+        sequence_number = send_full_fill(order, sequence_number, conn, order.remaining_quantity,
+                                         float(last_price))
     elif int(configs.get('partial_fill_min_qty').data) <= new_remaining_quantity:
-        output_to_file_log_debug('Send PF')
-        sequence_number = orderProcessor.send_partial_fills(order, sequence_number, conn, order.remaining_quantity,
-                                                            float(last_price))
+        write_to_log.output_to_file_log_debug('Send PF')
+        sequence_number = send_partial_fills(order, sequence_number, conn, order.remaining_quantity,
+                                             float(last_price))
 
     return sequence_number

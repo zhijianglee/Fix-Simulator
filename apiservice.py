@@ -1,7 +1,7 @@
 # This file contains the code of flask application
 # Only need to run this to start both flask application and the simulator
 import asyncio
-import random
+import logging
 import sys
 
 from flask import Flask, request, jsonify
@@ -9,7 +9,7 @@ import threading
 
 from builder import *
 from simulator import FIXSimulator
-from write_to_log import output_to_file_log_debug
+import random
 
 app = Flask(__name__)
 fix_simulator = FIXSimulator()
@@ -52,7 +52,7 @@ def decode_fix_to_json():
 
 def run_flask_app():
     port_to_use = flask_port_to_use
-    output_to_file_log_debug('Running Flask App using port '+str(port_to_use))
+    print(port_to_use)
     app.run(host='0.0.0.0', port=port_to_use)
 
 
@@ -65,17 +65,17 @@ if __name__ == "__main__":
     # flask_thread.join()
     simulator_port = int(sys.argv[1])
     flask_port_to_use = int(sys.argv[2])
-
     simulator = FIXSimulator(port=simulator_port)
+
+    # Start the Flask application in the main thread
+
+    flask_thread = threading.Thread(target=run_flask_app)
+    flask_thread.start()
 
     # Start the FIXSimulator server in a separate thread
     # simulator_thread = threading.Thread(target=lambda: asyncio.run(simulator.run_server()))
-    simulator_thread = threading.Thread(target=simulator.run_server)
+    simulator_thread = threading.Thread(target=simulator.run_server())
     simulator_thread.start()
-
-    # Start the Flask application in the main thread
-    flask_thread = threading.Thread(target=run_flask_app)
-    flask_thread.start()
 
     flask_thread.join()
     simulator_thread.join()

@@ -47,7 +47,7 @@ def main():
     sender_comp_id = 'OMS_OCBC_01'
     target_comp_id = 'LZJSIM'
     host = '127.0.0.1'
-    port = 7418
+    port = 7878
 
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

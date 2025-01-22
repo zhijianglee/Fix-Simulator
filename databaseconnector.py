@@ -2,15 +2,15 @@ import oracledb
 from flask import json, jsonify
 from jproperties import Properties
 
-from write_to_log import output_to_file_log_debug, output_to_file_log_error
+from write_to_log import output_to_file_log_debug
 
 configs = Properties()
 with open('db.properties', 'rb') as config_file:
     configs.load(config_file)
 
 # Define your connection parameters
-username = configs.get('db_username').data
-password = configs.get('db_password').data
+fryingpan = configs.get('db_username').data
+saucepan = configs.get('db_password').data
 sn = configs.get('sn').data
 sid = configs.get('sid').data
 hostname = configs.get('hostname').data
@@ -34,19 +34,19 @@ def make_db_insert(columns, values):
 
 def doInsert(query):
     try:
-        connection = oracledb.connect(user=username, host=hostname, password=password, sid=sid, port=port)
+        connection = oracledb.connect(user=fryingpan, host=hostname, password=saucepan, service_name=sn, port=port)
         cursor = connection.cursor()
         output_to_file_log_debug(query)
         cursor.execute(query)
         connection.commit()
         output_to_file_log_debug("Data inserted successfully.")
     except oracledb.DatabaseError as e:
-        output_to_file_log_error(f"Database error: {e}")
+        print(f"Database error: {e}")
 
 
-def getSingleResultFromDB(query):
+def getSingleResultFromDB(query,backup_query=None):
     try:
-        connection = oracledb.connect(user=username, host=hostname, password=password, sid=sid, port=port)
+        connection = oracledb.connect(user=fryingpan, host=hostname, password=saucepan, service_name=sn, port=port)
         cursor = connection.cursor()
         output_to_file_log_debug(query)
         cursor.execute(query)
@@ -61,11 +61,11 @@ def getSingleResultFromDB(query):
             return 'No data found'
 
     except Exception as e:
-        output_to_file_log_error(f"Error: {e}")
+        print(f"Error: {e}")
 
 
 def getResultFromDB(query):
-    connection = oracledb.connect(user=username, host=hostname, password=password, sid=sid, port=port)
+    connection = oracledb.connect(user=fryingpan, host=hostname, password=saucepan, service_name=sn, port=port)
     cursor = connection.cursor()
     try:
         cursor.execute(query)
