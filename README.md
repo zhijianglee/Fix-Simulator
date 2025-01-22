@@ -36,7 +36,12 @@ Simulator.properties containing list of configured properties. Only below are wo
 # Running the simulator
 
 1. Ensure the below modules are being installed Refer to requirements.txt
-2. Start the simulator by using apiservice.py
+2. Start the simulator by using python3 apiservice.py 7418 5031
+
+   7418 is binding port for fix message
+   5031 is the port for API request
+
+   Please use one port for one fix session
 
 # Using /send_message
 1. You can use this to send fix message to connected client by passing in your desired tags in a json object form
