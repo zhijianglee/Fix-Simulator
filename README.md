@@ -55,9 +55,10 @@ Simulator.properties containing list of configured properties. Only below are wo
 
 # Known Bugs and Pull Requests are Welcomed
 1. Sequence number will be out of sync after some time running the simulator
-2. The fix message return from the simulator might not get recognized by your fix adapter / client. 
-3. You need to find out why
-4. Order Cancel and Amendment not really working yet
+2. The fix message return from the simulator might not get recognized by your fix adapter / client.
+3. No multithreading capability. One port can only serve one comp id
+
+
 
 # Working Examples / Tests
 
