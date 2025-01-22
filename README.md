@@ -3,7 +3,7 @@
 
 This is a fix simulator using FIX 4.2 protocol built by relying on ChatGPT almost 60%. 
 It has some basic functionalities such as responding to login and order requests **(covered 35=D, 35=F and 35G)**
-Development is still in progress. However, this simulator is function partially. </br>
+This simulator has basic functions for basics testing. You need to configure it according to your needs </br>
 
 This simulator also comes with a flask application containing several API endpoints. **However, only /fix message/parse_to_json and /send_message is working**. 
 
