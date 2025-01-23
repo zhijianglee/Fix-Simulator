@@ -32,7 +32,6 @@ market_bid_column = str(configs.get('market_bid_column').data)
 market_last_price_column = str(configs.get('market_bid_column').data)
 
 
-
 def get_last_price(order):
     try:
         # Default last_price
@@ -88,8 +87,6 @@ def get_last_price(order):
         last_price = round(random.uniform(10, 1000), 2)  # Random price between 10 and 1000
 
     return last_price
-
-
 
 def get_bid_price(order):
     try:

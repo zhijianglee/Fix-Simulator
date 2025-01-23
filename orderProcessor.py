@@ -237,7 +237,7 @@ def verify_order(order, sequence_number, conn):
     #  write_to_log.output_to_file_log_debug(str(order.OrdType))
     valid_order = True
     last_price = get_last_price(order)
-    bid_pirce = get_bid_price(order)
+    bid_price = get_bid_price(order)
 
     if order.OrdType == '2':
         if should_validate_price == 'true':
@@ -253,7 +253,7 @@ def verify_order(order, sequence_number, conn):
             elif float(order.Price) > maximum_price:
                 valid_order = False
                 extreme_order_price_message = 'Limit price (' + str(order.Price) + ') above acceptable (' + str(
-                    maximum_price) + ') [=bid(' + str(bid_pirce) + ') - ' + str(
+                    maximum_price) + ') [=bid(' + str(bid_price) + ') - ' + str(
                     extreme_order_price_percentage) + ' ticks]'
                 sequence_number = send_rejection_custom_message(order, sequence_number, conn,
                                                                 extreme_order_price_message)
@@ -261,7 +261,7 @@ def verify_order(order, sequence_number, conn):
             elif float(order.Price) < minimum_price:
                 valid_order = False
                 extreme_order_price_message = 'Limit price (' + str(order.Price) + ') below acceptable (' + str(
-                    minimum_price) + ') [=bid(' + str(bid_pirce) + ') - ' + str(
+                    minimum_price) + ') [=bid(' + str(bid_price) + ') - ' + str(
                     extreme_order_price_percentage) + ' ticks]'
                 sequence_number = send_rejection_custom_message(order, sequence_number, conn,
                                                                 extreme_order_price_message)
