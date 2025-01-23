@@ -37,11 +37,15 @@ def get_last_price(order):
     try:
         # Default last_price
         last_price = 1
+        if order.ExDestination=='HK':
+            symbol='0'+order.Symbol
+        else:
+            symbol=order.Symbol
 
         if market_price_source == 'GOOGLE':
             try:
                 # URL of a stock page on Google Finance
-                url = "https://www.google.com/finance/quote/" + order.Symbol + ":" + get_google_code(exchanges, order.ExDestination)
+                url = "https://www.google.com/finance/quote/" + symbol + ":" + get_google_code(exchanges, order.ExDestination)
 
                 # Fetch the page content
                 response = requests.get(url)
@@ -91,11 +95,15 @@ def get_bid_price(order):
     try:
         # Default bid_price
         bid_price = 1
+        if order.ExDestination=='HK':
+            symbol='0'+order.Symbol
+        else:
+            symbol=order.Symbol
 
         if market_price_source == 'GOOGLE':
             try:
                 # URL of the stock on Google Finance
-                url = "https://www.google.com/finance/quote/" + order.Symbol + ":" + get_google_code(exchanges, order.ExDestination)
+                url = "https://www.google.com/finance/quote/" + symbol + ":" + get_google_code(exchanges, order.ExDestination)
 
                 # Fetch the web page
                 response = requests.get(url)

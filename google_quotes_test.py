@@ -16,20 +16,9 @@ with open("exchanges.json", "r") as file:
     exchanges = json.load(file)  # Assuming it's a list of dictionaries
 
 
-api_key = str(configs.get('alphavantage_api_key').data)
-symbol = "IBM"
-url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={api_key}"
-
-response = requests.get(url)
-data = response.json()
-print(data)
-price = data['Global Quote']['05. price']
-print(price)
-
-
 # URL of a stock page on Google Finance
-url = "https://www.google.com/finance/quote/STAN:"+get_google_code(exchanges, "L")
-
+url = "https://www.google.com/finance/quote/D05:"+get_google_code(exchanges, "SI")
+print(url)
 # Fetch the page content
 response = requests.get(url)
 soup = BeautifulSoup(response.text, 'html.parser')

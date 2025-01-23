@@ -37,7 +37,7 @@
     },
     {
         "reuters_exchange_mnemonic": "HK",
-         "google_code": "HKG",
+        "google_code": "HKG",
         "name": "Hong Kong Stock Exchange",
         "closing_time": "16:00",
         "time_zone": "Asia/Hong_Kong"
