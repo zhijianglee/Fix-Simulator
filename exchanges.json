@@ -30,7 +30,7 @@
 
     {
         "reuters_exchange_mnemonic": "T",
-         "google_code": "TYO",
+        "google_code": "TYO",
         "name": "Tokyo Stock Exchange",
         "closing_time": "15:00",
         "time_zone": "Asia/Tokyo"
@@ -39,7 +39,7 @@
         "reuters_exchange_mnemonic": "HK",
         "google_code": "HKG",
         "name": "Hong Kong Stock Exchange",
-        "closing_time": "16:00",
+        "closing_time": "16:08",
         "time_zone": "Asia/Hong_Kong"
     },
 

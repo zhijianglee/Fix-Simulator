@@ -165,7 +165,6 @@ class FIXSimulator:
                 return self.create_logon_response()
 
             elif msg_type == '0':
-
                 return self.create_heartbeat_response()
 
             elif msg_type == 'D':
