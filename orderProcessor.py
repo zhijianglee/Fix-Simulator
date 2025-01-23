@@ -2,6 +2,7 @@ import time
 from datetime import datetime
 import random
 import write_to_log
+from quotes_getter import get_last_price, get_bid_price
 from write_to_log import *
 from proccessFills import send_fills
 from proccessRejection import *
@@ -224,42 +225,6 @@ def send_order_confirmation(order, sequence_number, conn, valid_order=True):
     return sequence_number
 
 
-def get_last_price(order):
-    # Implement method to get last done price here
-    last_price = databaseconnector.getSingleResultFromDB(
-        "SELECT LAST_DONE_PRICE FROM COUNTER WHERE FEED_COUNTER_CODE='" + order.security_id + "'")
-    if last_price == "No data found":
-        last_price = databaseconnector.getSingleResultFromDB(
-            "SELECT LAST_DONE_PRICE FROM COUNTER WHERE COUNTER_CODE='" + order.Symbol + "'")
-    return last_price
-
-
-def get_bid_price(order):
-    bid_price = databaseconnector.getSingleResultFromDB(
-        "SELECT BID FROM COUNTER WHERE FEED_COUNTER_CODE='" + order.security_id + "'")
-    if bid_price == "No data found":
-        bid_price = databaseconnector.getSingleResultFromDB(
-            "SELECT BID FROM COUNTER WHERE COUNTER_CODE='" + order.Symbol + "'")
-    return bid_price
-
-
-def get_offer_price(order):
-    offer_price = databaseconnector.getSingleResultFromDB(
-        "SELECT OFFER FROM COUNTER WHERE FEED_COUNTER_CODE='" + order.security_id + "'")
-    if offer_price == "No data found":
-        offer_price = databaseconnector.getSingleResultFromDB(
-            "SELECT OFFER FROM COUNTER WHERE COUNTER_CODE='" + order.Symbol + "'")
-    return offer_price
-
-
-def get_max_accepted_price(order):
-    bid_price = get_bid_price(order);
-
-
-def get_min_accepted_price(order):
-    bid_price = get_bid_price(order);
-
-
 def verify_order(order, sequence_number, conn):
     #  write_to_log.output_to_file_log_debug(order.OrderQty)
     write_to_log.output_to_file_log_debug('Verifying Order Price')
@@ -268,13 +233,15 @@ def verify_order(order, sequence_number, conn):
     extreme_order_price_percentage = float(str(configs.get('extreme_order_price_percentage').data))
     should_validate_price = str(configs.get('extreme_price_validation').data)
 
-    last_price = get_last_price(order)
-    bid_pirce = get_bid_price(order)
+
     #  write_to_log.output_to_file_log_debug(str(order.OrdType))
     valid_order = True
+    last_price = get_last_price(order)
+    bid_pirce = get_bid_price(order)
 
     if order.OrdType == '2':
         if should_validate_price == 'true':
+
             # Determine the minimum and maximum price
             maximum_price = float(last_price) * (1 + (extreme_order_price_percentage / 100))
             minimum_price = float(last_price) * (1 - (extreme_order_price_percentage / 100))

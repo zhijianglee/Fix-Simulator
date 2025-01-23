@@ -1,86 +1,95 @@
 [
     {
-        "exchange_code": "L",
+        "reuters_exchange_mnemonic": "L",
+        "google_code": "LON",
         "name": "London Stock Exchange",
         "closing_time": "16:30",
         "time_zone": "Europe/London"
     },
     {
-        "exchange_code": "SI",
+        "reuters_exchange_mnemonic": "SI",
+        "google_code": "SGX",
         "name": "Singapore Stock Exchange",
         "closing_time": "17:00",
         "time_zone": "Asia/Singapore"
     },
     {
-        "exchange_code": "N",
+        "reuters_exchange_mnemonic": "N",
+        "google_code": "NYSE",
         "name": "New York Stock Exchange",
         "closing_time": "16:00",
         "time_zone": "America/New_York"
     },
     {
-        "exchange_code": "O",
+        "reuters_exchange_mnemonic": "OQ",
+        "google_code": "NASDAQ",
         "name": "NASDAQ",
         "closing_time": "16:00",
         "time_zone": "America/New_York"
     },
 
     {
-        "exchange_code": "T",
+        "reuters_exchange_mnemonic": "T",
+         "google_code": "TYO",
         "name": "Tokyo Stock Exchange",
         "closing_time": "15:00",
         "time_zone": "Asia/Tokyo"
     },
     {
-        "exchange_code": "HK",
+        "reuters_exchange_mnemonic": "HK",
+         "google_code": "HKG",
         "name": "Hong Kong Stock Exchange",
         "closing_time": "16:00",
         "time_zone": "Asia/Hong_Kong"
     },
+
     {
-        "exchange_code": "SS",
-        "name": "Shanghai Stock Exchange",
-        "closing_time": "15:00",
-        "time_zone": "Asia/Shanghai"
-    },
-    {
-        "exchange_code": "AX",
+        "reuters_exchange_mnemonic": "AX",
         "name": "Australian Securities Exchange",
+        "google_code": "ASX",
         "closing_time": "16:10",
         "time_zone": "Australia/Sydney"
     },
     {
-        "exchange_code": "F",
+        "reuters_exchange_mnemonic": "DE",
+        "google_code": "ETR",
         "name": "Frankfurt Stock Exchange",
         "closing_time": "17:30",
         "time_zone": "Europe/Berlin"
     },
-    {
-        "exchange_code": "PAR",
-        "name": "Euronext Paris",
-        "closing_time": "17:30",
-        "time_zone": "Europe/Paris"
-    },
+
      {
-        "exchange_code": "PA",
+        "reuters_exchange_mnemonic": "PA",
+         "google_code": "EPA",
         "name": "Paris Stock Exchange",
         "closing_time": "17:30",
         "time_zone": "Europe/Paris"
     },
     {
-        "exchange_code": "SW",
+        "reuters_exchange_mnemonic": "S",
+          "google_code": "SWX",
         "name": "Swiss Exchange",
         "closing_time": "17:30",
         "time_zone": "Europe/Zurich"
     },
     {
-        "exchange_code": "A",
+        "reuters_exchange_mnemonic": "A",
+         "google_code": "NYSEAMERICAN",
         "name": "NYSE American (formerly AMEX)",
         "closing_time": "16:00",
         "time_zone": "America/New_York"
     },
     {
-        "exchange_code": "BX",
-        "name": "Euronext Brussels",
+        "reuters_exchange_mnemonic": "P",
+        "google_code": "NYSEARCA",
+        "name": "NYSE ARCA",
+        "closing_time": "17:30",
+        "time_zone": "Europe/Brussels"
+    },
+     {
+        "reuters_exchange_mnemonic": "AS",
+         "google_code": "AMS",
+        "name": "Netherland Exchange",
         "closing_time": "17:30",
         "time_zone": "Europe/Brussels"
     }

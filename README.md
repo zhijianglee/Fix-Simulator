@@ -9,11 +9,12 @@ This simulator also comes with a flask application containing several API endpoi
 
 # Set Up
 
-Simulator.properties containing list of configured properties. Only below are working
+Simulator.properties containing list of configured properties. 
 
-* tag58*
-* simulator_comp_id
-* fills logic
+To get things started. You need to configure market_price_source
+
+If you choose DB. You will need to provide the table and columns details to retrieve the price
+
 
 
 1. Minimum Python version is 3.9
