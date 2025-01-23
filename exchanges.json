@@ -67,7 +67,7 @@
     },
     {
         "reuters_exchange_mnemonic": "S",
-          "google_code": "SWX",
+        "google_code": "SWX",
         "name": "Swiss Exchange",
         "closing_time": "17:30",
         "time_zone": "Europe/Zurich"

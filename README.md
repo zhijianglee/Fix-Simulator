@@ -9,22 +9,46 @@ This simulator also comes with a flask application containing several API endpoi
 
 # Set Up
 
-Simulator.properties containing list of configured properties. 
-
-To get things started. You need to configure market_price_source
-
-If you choose DB. You will need to provide the table and columns details to retrieve the price
+## Environment Setup
+Minimum Python version is 3.9, but ideally is 3.12
+Oracle DB is required, or at least a database, it can be MSSQL, MariaDB. However, you need to work out on code implementation in databaseconnector.py
 
 
+## Properties Files
+There are two properties file you need to configure to get things started.
+* simulator.properties
+* db.properties
 
-1. Minimum Python version is 3.9
-2. Recommended is 3.12
-3. **Oracle Database is required to run this simulator.**
-4. You will need to create a user (table space) and grant SELECT, CREATE AND UPDATE query to that user.
-5. After that login as that user and crete required table using the DDL attached in this directory.
-6. You will need to create db.properties file containing the below items.
-7. Change the simulator_comp_id and ensure that your client fix adapter is pointing to the correct one.
+### simulator.properties
+Simulator.properties containing list of configurable properties. 
 
+Change the simulator_comp_id and ensure that your client fix adapter is pointing to the correct one.
+
+simulator.properties has been configured with default values. You may review them and change them according to your 
+preferences. Comments exists in the property file contains tips on how to set the value. 
+
+The value of market_price_source has been defaulted to 'GOOGLE' which will obtain latest delayed quote from Google Finance. 
+
+You can switch it to 'DB' if you want to obtain the last done price from your internal DB. 
+
+Implementation of the logic to obtain last done price and bid price is in quotes_getter.py
+
+For Example: If This is your query to obtain last done price
+
+SELECT LAST_DONE_PRICE FROM COUNTER WHERE COUNTER_CODE='C6L' or SELECT LAST_DONE_PRICE FROM COUNTER WHERE FEED_COUNTER_CODE='C6L.SI'
+
+Then this is how you should configure those values in properties file
+market_price_db_source_table=COUNTER
+market_stock_column1=FEED_COUNTER_CODE
+market_stock_column2=COUNTER_CODE
+market_last_price_column=LAST_DONE_PRICE
+
+This is the same for bid price as well. 
+
+
+### db.properties
+
+You will need to create db.properties file containing the below items.
 
 * db_username=fixsim
 * db_password=fixsim123
@@ -32,6 +56,10 @@ If you choose DB. You will need to provide the table and columns details to retr
 * sid=XE
 * hostname=localhost
 * port=1521
+
+
+You will need to create a user (table space) and grant SELECT, CREATE AND UPDATE query to that user.
+After that login as that user and crete required table using the DDL attached in this directory.
 
 
 # Running the simulator
@@ -44,14 +72,16 @@ If you choose DB. You will need to provide the table and columns details to retr
 
    Please use one port for one fix session
 
-# Using /send_message
-1. You can use this to send fix message to connected client by passing in your desired tags in a json object form
+
+# Using FIX Server Simulator API endpoints
+
+## Using /send_message
+
+You can use this to send fix message to connected client by passing in your desired tags in a json object form
 
 ### These tags will be automatically added. Do not include them
 
-1. 49,17,37,52,60,34,10
-2. Remember to include 9 with 0 length in your json request body. It will get recalculated again. 
-
+49,17,37,52,60,34,10
 
 
 # Known Bugs and Pull Requests are Welcomed

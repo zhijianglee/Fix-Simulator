@@ -17,7 +17,7 @@ with open("exchanges.json", "r") as file:
 
 
 # URL of a stock page on Google Finance
-url = "https://www.google.com/finance/quote/D05:"+get_google_code(exchanges, "SI")
+url = "https://www.google.com/finance/quote/UBSG:"+get_google_code(exchanges, "S")
 print(url)
 # Fetch the page content
 response = requests.get(url)
@@ -25,5 +25,7 @@ soup = BeautifulSoup(response.text, 'html.parser')
 
 # Extract stock price (modify selector based on the current page structure)
 price = soup.find('div', class_="YMlKec fxKbKc").text
+stock_name=soup.find('div',class_="zzDege").text
 cleaned_price = re.sub(r"[^\d.]", "", price)
-print(f"Google Stock Price: {cleaned_price}")
+print(f"Stock Price: {cleaned_price}")
+print(stock_name)
