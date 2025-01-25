@@ -64,7 +64,7 @@ def getSingleResultFromDB(query,backup_query=None):
         print(f"Error: {e}")
 
 
-def getResultFromDB(query):
+def get_result_from_db(query):
     connection = oracledb.connect(user=fryingpan, host=hostname, password=saucepan, service_name=sn, port=port)
     cursor = connection.cursor()
     try:

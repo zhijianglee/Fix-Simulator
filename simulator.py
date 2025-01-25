@@ -16,6 +16,7 @@ import proccessCancellation
 import sequence_manager
 
 from orderProcessor import *
+from proccessExpiry import process_expiry
 from write_to_log import *
 from builder import *
 from globals import global_list, global_seq_num, retrieve_messages
@@ -264,6 +265,8 @@ class FIXSimulator:
         fix_message = build_fix_message(response_fields)
         self.message_log.append(fix_message)
         self.sequence_number += 1
+        # While sending heartbeat, check if any exchange is closed. If yes do expiry processing
+        self.sequence_number=process_expiry(self.sequence_number,self.conn)
         save_sequence_number(self.sequence_number)
         save_message_log(self.message_log)
         global_list.append(fix_message)

@@ -51,7 +51,7 @@ class Order:
         self.TransactTime = TransactTime
         self.Side = Side
         self.Symbol = Symbol
-        self.HandlInst = HandleInst
+        self.HandleInst = HandleInst
         self.ClOrdID = ClOrdID
         self.id_source = id_source
         self.remaining_quantity = 0
@@ -159,7 +159,7 @@ def send_order_confirmation(order, sequence_number, conn, valid_order=True):
             "151": str(order.OrderQty),
             "17": str(random.randint(100000, 999999)),
             "20": str(ExecTransType.New.value),
-            "21": str(order.HandlInst),
+            "21": str(order.HandleInst),
             "22": str(order.id_source),
             "31": "0.0000",
             "32": "0",
