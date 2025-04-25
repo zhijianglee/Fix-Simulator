@@ -4,6 +4,7 @@ import asyncio
 import logging
 import sys
 
+import requests
 from flask import Flask, request, jsonify
 import threading
 
@@ -15,6 +16,8 @@ app = Flask(__name__)
 fix_simulator = FIXSimulator()
 
 flask_port_to_use = random.randrange(5002, 5055)
+
+
 
 
 @app.route('/send_message', methods=['POST'])
@@ -36,6 +39,8 @@ def retrieve_single_order():
     order_id = data.get('orderID')
 
 
+
+
 @app.route('/fix message/parse_to_json', methods=['POST'])
 def decode_fix_to_json():
     data = request.json
@@ -48,6 +53,7 @@ def decode_fix_to_json():
     #     fix_message_object = parse_fix_message_no_delimiter(data.get('message'))
 
     return fix_message_object
+
 
 
 def run_flask_app():
