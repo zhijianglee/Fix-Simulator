@@ -5,6 +5,7 @@ import write_to_log
 from quotes_getter import get_last_price, get_bid_price
 from write_to_log import *
 from proccessFills import send_fills
+import pytz
 from proccessRejection import *
 
 import databaseconnector
@@ -172,16 +173,16 @@ def send_order_confirmation(order, sequence_number, conn, valid_order=True):
             "44": str(order.Price),
             "48": str(order.Symbol),
             "49": configs.get('simulator_comp_id').data,
-            "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             "54": str(order.Side),
-            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             "55": str(order.Symbol),
             "56": str(order.ClientCompID),
             "57": str(order.SenderSubID),
             "58": str(configs.get('tag58_order_accepted').data),
             "59": str(order.TimeInForce),
             "6": "0.0000",
-            "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
         }
         if order.OrdType == '1':

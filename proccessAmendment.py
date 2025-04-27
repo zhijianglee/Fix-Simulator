@@ -99,7 +99,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         '9': '0',
         "35": str(MsgType.Execution_Report.value),
         "34": str(sequence_number),
-        "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "43": "N",
         "49": configs.get('simulator_comp_id').data,
         "56": str(order.ClientCompID),
@@ -108,7 +108,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "150": str(ExecType.Pending_Replace.value),
         "151": str(oirigin_remaining_qty),
         "41": str(ori_order_id),
-        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "21": str(order.HandlInst),
         "11": str(order.ClOrdID),  #New Order ID
         "31": "0.0000",
@@ -129,7 +129,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "37": str(random.randint(100000, 999999)),
         "14": str(cum_quantity),
         "58": str(configs.get('tag58_amendment_pending').data),
-        "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
     if order.OrdType == '1':
@@ -151,7 +151,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         '9': '0',
         "35": str(MsgType.Execution_Report.value),
         "34": str(sequence_number),
-        "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "43": "Y",
         "49": configs.get('simulator_comp_id').data,
         "56": str(order.ClientCompID),
@@ -167,7 +167,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "1": str(order.Account),
         "15": str(order.currency),
         "55": str(order.Symbol),
-        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "22": str(order.id_source),
         "48": str(order.Symbol),
         "54": str(order.Side),
@@ -182,7 +182,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "37": str(random.randint(100000, 999999)),
         "14": str(cum_quantity),
         "58": str(configs.get('tag58_amendment_completed').data),
-        "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
     if order.OrdType == '1':

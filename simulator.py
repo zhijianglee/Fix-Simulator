@@ -206,13 +206,13 @@ class FIXSimulator:
             '8': 'FIX.4.2',
             '9': '0',
             '35': 'A',
-            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             '141': 'Y',
             '43': 'Y',
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
             '34': str(self.sequence_number),  # Message sequence number
-            '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
+            '52': datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '98': '0',  # EncryptMethod
             '108': '60',  # HeartBtInt
         }
@@ -231,12 +231,12 @@ class FIXSimulator:
             '8': 'FIX.4.2',
             '9': '0',
             '35': 'A',
-            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
             '58': 'LOgging out',
             '34': str(self.sequence_number),  # Message sequence number
-            '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
+            '52': datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '98': '0',  # EncryptMethod
             '108': '60',  # HeartBtInt
         }
@@ -256,11 +256,11 @@ class FIXSimulator:
             '9': '0',
             '35': '0',
             '43': 'Y',
-            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
             '34': str(self.sequence_number),  # Message sequence number
-            '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
+            '52': datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
         }
         fix_message = build_fix_message(response_fields)
         self.message_log.append(fix_message)
@@ -278,12 +278,12 @@ class FIXSimulator:
             '9': '0',
             '35': '0',
             '43': 'Y',
-            "112": time.strftime("%Y%m%d-%H:%M:%S.000"),
-            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "112": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
+            "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
             '34': str(self.sequence_number),  # Message sequence number
-            '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
+            '52': datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
         }
         output_to_file_log_debug('Responding to test request')
         fix_message = build_fix_message(response_fields)
@@ -302,12 +302,12 @@ class FIXSimulator:
             '8': 'FIX.4.2',
             '9': '0',
             '43': 'Y',
-            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             '35': '3',  # Reject message type
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
             '34': str(self.sequence_number),  # Message sequence number
-            '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
+            '52': datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '45': msg_dict['34'],  # Reference sequence number
             '58': 'Unsupported message type',  # Text
 
@@ -330,7 +330,7 @@ class FIXSimulator:
             '49': self.senderCompID,  # Use configured target
             '56': self.targetCompID,  # Use configured sender
             '34': str(self.sequence_number),  # Message sequence number
-            '52': time.strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
+            '52': datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),  # Sending time
             '45': msg_dict['34'],  # Reference sequence number
             '58': tag58_string,  # Text
             '10': '000'  # Placeholder for checksum, will be updated later
@@ -370,8 +370,8 @@ class FIXSimulator:
                 response_fields['49'] = configs.get('simulator_comp_id').data
                 response_fields['17'] = str(random.randint(100000, 999999))
                 response_fields['37'] = str(random.randint(100000, 999999))
-                response_fields['52'] = time.strftime("%Y%m%d-%H:%M:%S.000")
-                response_fields['60'] = time.strftime("%Y%m%d-%H:%M:%S.000")
+                response_fields['52'] = datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000")
+                response_fields['60'] = datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000")
                 response_fields['34'] = str(sequence_number)
                 fix_message = build_fix_message(response_fields)
                 output_to_file_log_debug(fix_message)
@@ -418,11 +418,11 @@ class FIXSimulator:
                         '9': '0',
                         '35': '0',
                         '43': 'Y',
-                        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+                        "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
                         '49': self.senderCompID,
                         '56': self.targetCompID,
                         '34': str(self.sequence_number),
-                        '52': time.strftime("%Y%m%d-%H:%M:%S.000"),
+                        '52': datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
                     }
                     output_to_file_log_debug('Sending Hearbeat')
                     output_to_file_log_debug(response_fields)

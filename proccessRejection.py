@@ -1,6 +1,10 @@
-import datetime
+
 import random
 import time
+from datetime import datetime
+
+import pytz
+
 import databaseconnector
 
 from jproperties import Properties
@@ -45,9 +49,9 @@ def send_rejection(order, sequence_number, conn):
         "43": "N",
         "44": str(order.Price),
         "48": str(order.Symbol),
-        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "49": configs.get('simulator_comp_id').data,
-        "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "54": str(order.Side),
         "55": str(order.Symbol),
         "56": str(order.ClientCompID),
@@ -57,7 +61,7 @@ def send_rejection(order, sequence_number, conn):
         "75": time.strftime('%Y%m%d'),
         "6": "0.0000",
         "103": "0",
-        "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
     if order.OrdType == '1':
@@ -97,9 +101,9 @@ def send_rejection_custom_message(order, sequence_number, conn, message):
         "43": "N",
         "44": str(order.Price),
         "48": str(order.Symbol),
-        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "49": configs.get('simulator_comp_id').data,
-        "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "54": str(order.Side),
         "55": str(order.Symbol),
         "56": str(order.ClientCompID),
@@ -109,7 +113,7 @@ def send_rejection_custom_message(order, sequence_number, conn, message):
         "75": time.strftime('%Y%m%d'),
         "6": "0.0000",
         "103": "0",
-        "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
     if order.OrdType == '1':

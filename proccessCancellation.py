@@ -112,8 +112,8 @@ def send_cancellation(order, sequence_number, conn):
         "44": str(price),
         "48": str(order.Symbol),
         "49": configs.get('simulator_comp_id').data,
-        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
-        "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
+        "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "54": str(order.Side),
         "55": str(order.Symbol),
         "56": str(order.ClientCompID),
@@ -121,7 +121,7 @@ def send_cancellation(order, sequence_number, conn):
         "58": str(configs.get('tag58_cancel_in_prog').data),
         "59": str(time_in_force),
         "6": str(avg_price),
-        "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
 
@@ -157,11 +157,11 @@ def send_cancellation(order, sequence_number, conn):
         "40": str(ord_type),
         "41": str(order.orgin_ord_id),
         "43": "N",
-        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "44": str(price),
         "48": str(order.Symbol),
         "49": configs.get('simulator_comp_id').data,
-        "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "54": str(order.Side),
         "55": str(order.Symbol),
         "56": str(order.ClientCompID),
@@ -169,7 +169,7 @@ def send_cancellation(order, sequence_number, conn):
         "58": str(configs.get('tag58_cancel_complete').data),
         "59": str(time_in_force),
         "6": str(avg_price),
-        "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
     if ord_type == '1':

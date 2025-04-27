@@ -130,18 +130,18 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
             "44": str(order.Price),
             "48": str(order.Symbol),
             "49": configs.get('simulator_comp_id').data,
-            "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             "54": str(order.Side),
             "55": str(order.Symbol),
             "56": str(order.ClientCompID),
-            "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             "128": str(order.OnBehalfOfCompID),
             "57": str(order.SenderSubID),
             "58": str(configs.get('tag58_order_executed').data),
             "59": str(order.TimeInForce),
             "75": time.strftime('%Y%m%d'),
             "6": "{:.3f}".format(average_filled_price),
-            "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+            "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
         }
         if order.OrdType == '1':
@@ -233,18 +233,18 @@ def send_custom_fills(order, sequence_number, conn, qty_to_fill, cumulative_fill
         "44": str(order.Price),
         "48": str(order.Symbol),
         "49": configs.get('simulator_comp_id').data,
-        "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "54": str(order.Side),
         "55": str(order.Symbol),
         "56": str(order.ClientCompID),
-        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "128": str(order.OnBehalfOfCompID),
         "57": str(order.SenderSubID),
         "58": str(configs.get('tag58_order_executed').data),
         "59": str(order.TimeInForce),
         "75": datetime.now().strftime('%Y%m%d'),
         "6": "{:.3f}".format(average_filled_price),
-        "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
     if order.OrdType == '1':
@@ -321,13 +321,13 @@ def send_full_fill(order, sequence_number, conn, target_filled_qty=0, old_price=
         "37": str(random.randint(100000, 999999)),
         "38": str(order.OrderQty),
         "39": str(OrdStatus.Filled.value),
-        "122": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "40": str(order.OrdType),
         "43": "N",
         "44": str(order.Price),
         "48": str(order.Symbol),
         "49": configs.get('simulator_comp_id').data,
-        "52": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "52": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
         "54": str(order.Side),
         "55": str(order.Symbol),
         "56": str(order.ClientCompID),
@@ -336,7 +336,7 @@ def send_full_fill(order, sequence_number, conn, target_filled_qty=0, old_price=
         "59": str(order.TimeInForce),
         "75": time.strftime('%Y%m%d'),
         "6": "{:.3f}".format(average_filled_price),
-        "60": time.strftime("%Y%m%d-%H:%M:%S.000"),
+        "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
 
     }
     if order.OrdType == '1':
