@@ -38,10 +38,11 @@ For Example: If This is your query to obtain last done price
 SELECT LAST_DONE_PRICE FROM COUNTER WHERE COUNTER_CODE='C6L' or SELECT LAST_DONE_PRICE FROM COUNTER WHERE FEED_COUNTER_CODE='C6L.SI'
 
 Then this is how you should configure those values in properties file
-market_price_db_source_table=COUNTER
-market_stock_column1=FEED_COUNTER_CODE
-market_stock_column2=COUNTER_CODE
-market_last_price_column=LAST_DONE_PRICE
+
+* market_price_db_source_table=COUNTER
+* market_stock_column1=FEED_COUNTER_CODE
+* market_stock_column2=COUNTER_CODE
+* market_last_price_column=LAST_DONE_PRICE
 
 This is the same for bid price as well. 
 
