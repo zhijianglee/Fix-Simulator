@@ -47,7 +47,7 @@ def main():
     sender_comp_id = 'OMS_OCBC_01'
     target_comp_id = 'LZJSIM'
     host = '127.0.0.1'
-    port = 7878
+    port = 7418
 
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -64,20 +64,20 @@ def main():
             else:
                 print("Failed to receive response.")
 
-            # proposed_order_id = "OSCBD6C41908600"
+            proposed_order_id = "OSCBD6C41908628"
             # amended_order_id = "OSCBD6C41908611"
             #
-            # order_creation_message = create_order_create_request(sender_comp_id, target_comp_id, proposed_order_id)
-            # print(f"Sending order create message: {order_creation_message}")
-            # send_message(sock, order_creation_message)
-            #
-            # creation_response = receive_message(sock)
-            #
-            # if creation_response is not None:
-            #     print(f"Received response: {creation_response}")
-            # else:
-            #     print("Failed to receive response.")
-            #
+            order_creation_message = create_order_create_request(sender_comp_id, target_comp_id, proposed_order_id)
+            print(f"Sending order create message: {order_creation_message}")
+            send_message(sock, order_creation_message)
+
+            creation_response = receive_message(sock)
+
+            if creation_response is not None:
+                print(f"Received response: {creation_response}")
+            else:
+                print("Failed to receive response.")
+
             #     # Send order amendment message
             # order_amend_message = create_order_amend_request(sender_comp_id, target_comp_id, proposed_order_id,
             #                                                  amended_order_id)

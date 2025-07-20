@@ -25,6 +25,9 @@ with open('simulator.properties', 'rb') as config_file:
 
 
 def send_rejection(order, sequence_number, conn):
+    broker_order_id = databaseconnector.getSingleResultFromDB(
+        "SELECT BROKER_ORDER_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID ='" + str(order.orgin_ord_id) + "'")
+
     response_fields = {
         "8": "FIX.4.2",
         "9": "0",
@@ -42,7 +45,7 @@ def send_rejection(order, sequence_number, conn):
         "32": "0",
         "34": str(sequence_number),
 
-        "37": str(random.randint(100000, 999999)),
+        "37": str(broker_order_id),
         "38": str(order.OrderQty),
         "39": str(OrdStatus.Rejected.value),
         "40": str(order.OrdType),
@@ -78,6 +81,10 @@ def send_rejection(order, sequence_number, conn):
 
 
 def send_rejection_custom_message(order, sequence_number, conn, message):
+
+    broker_order_id = databaseconnector.getSingleResultFromDB(
+        "SELECT BROKER_ORDER_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID ='" + str(order.orgin_ord_id) + "'")
+
     response_fields = {
         "8": "FIX.4.2",
         "9": "0",
@@ -94,7 +101,7 @@ def send_rejection_custom_message(order, sequence_number, conn, message):
         "31": "0.0000",
         "32": "0",
         "34": str(sequence_number),
-        "37": str(random.randint(100000, 999999)),
+        "37": str(broker_order_id),
         "38": str(order.OrderQty),
         "39": str(OrdStatus.Rejected.value),
         "40": str(order.OrdType),

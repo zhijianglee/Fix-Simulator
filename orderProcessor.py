@@ -1,5 +1,6 @@
 import time
-from datetime import datetime
+
+
 import random
 import write_to_log
 from quotes_getter import get_last_price, get_bid_price
@@ -31,7 +32,9 @@ orders_creation_related_fm = []
 class Order:
     def __init__(self, ClOrdID, HandleInst, Symbol, Side, TransactTime, OrderQty, OrdType, Price, TimeInForce, Account,
                  ExpireTime, ClientID, OrdRejReason, ExDestination, LastMkt, ExecBroker, ClientCompID, SenderSubID,
-                 currency, id_source, OnBehalfOfCompID, orgin_ord_id, security_id):
+                 currency, id_source, OnBehalfOfCompID, orgin_ord_id, security_id, broker_order_id=None):
+
+        self.broker_order_id = broker_order_id
         self.security_id = security_id
         self.orgin_ord_id = orgin_ord_id
         self.OnBehalfOfCompID = OnBehalfOfCompID
@@ -135,6 +138,7 @@ def handle_order(msg_dict, sequence_number, conn):
 
     (seq_to_use, valid_order) = verify_order(order, seq_to_use, conn)
 
+    order.broker_order_id=databaseconnector.getSingleResultFromDB("SELECT BROKER_ORDER_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID ='" + str(order.orgin_ord_id) + "'")
     updated_seq_num = send_order_confirmation(order, seq_to_use, conn, valid_order)
 
     # write_to_log.output_to_file_log_debug(configs.get('enable_auto_fill').data)
@@ -165,7 +169,7 @@ def send_order_confirmation(order, sequence_number, conn, valid_order=True):
             "31": "0.0000",
             "32": "0",
             "34": str(sequence_number),
-            "37": str(random.randint(100000, 999999)),
+            "37": str(order.broker_order_id),
             "38": str(order.OrderQty),
             "39": str(OrdStatus.New.value),
             "40": str(order.OrdType),

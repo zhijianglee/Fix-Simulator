@@ -39,10 +39,16 @@ def get_amendment_request(msg_dict, sequence_number, conn):
     ex_destination = msg_dict.get('100')
     last_mkt = msg_dict.get('30')
 
+
+
+
     new_order = Order(new_order_id, handle_inst, symbol, side, transact_time, new_order_qty, new_order_type,
                       new_limit_price, time_in_force, account, expire_time, client_id, None, ex_destination, last_mkt,
                       None, client_comp_id, sender_sub_id, currency, id_source, on_behalf_of_comp_id, ori_order_id,
                       security_id)
+
+    new_order.broker_order_id = databaseconnector.getSingleResultFromDB(
+        "SELECT BROKER_ORDER_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID ='" + str(new_order.orgin_ord_id) + "'")
 
     seq_to_use = int(sequence_number)
 
@@ -50,15 +56,22 @@ def get_amendment_request(msg_dict, sequence_number, conn):
         "UPDATE SIMULATOR_RECORDS SET ORDER_ID='" + str(new_order_id) + "' WHERE ORIGCLORDID='" + str(
             ori_order_id) + "'")
 
-    updated_seq_num = send_amendment(new_order, new_order_qty, ori_order_id, seq_to_use, conn)
 
-    sequencehandler.save_message_log(order_amendment_related_fm)
+    if int(new_order_qty) == int(configs.get('amendment_auto_reject_qty').data):
+        updated_seq_num= orderProcessor.send_rejection(new_order, seq_to_use, conn)
+
+    else:
+        updated_seq_num = send_amendment(new_order, new_order_qty, ori_order_id, seq_to_use, conn)
+        sequencehandler.save_message_log(order_amendment_related_fm)
 
     return updated_seq_num
 
 
 def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     price = 0.00
+
+    broker_order_id = databaseconnector.getSingleResultFromDB(
+        "SELECT BROKER_ORDER_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID ='" + str(new_order.orgin_ord_id) + "'")
 
     cum_quantity = int((databaseconnector.getSingleResultFromDB(
         "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'")))
@@ -126,7 +139,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "20": str(ExecTransType.Status.value),
         "17": str(random.randint(100000, 999999)),
         "6": str(price),
-        "37": str(random.randint(100000, 999999)),
+        "37": str(broker_order_id),
         "14": str(cum_quantity),
         "58": str(configs.get('tag58_amendment_pending').data),
         "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
@@ -179,7 +192,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
         "20": str(ExecTransType.New.value),
         "17": str(random.randint(100000, 999999)),
         "6": str(order.Price),
-        "37": str(random.randint(100000, 999999)),
+        "37": str(broker_order_id),
         "14": str(cum_quantity),
         "58": str(configs.get('tag58_amendment_completed').data),
         "60": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),

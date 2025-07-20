@@ -1,7 +1,10 @@
 import time
+from datetime import datetime
+
 import orderProcessor
 from dictionary import *
 import builder
+import pytz
 import databaseconnector
 from builder import *
 from write_to_log import *
@@ -122,7 +125,7 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
             "31": str(last_price),
             "32": str(int(fill_quantity_per_frequency)),
             "34": str(sequence_number),
-            "37": str(random.randint(100000, 999999)),
+            "37": str(order.broker_order_id),
             "38": str(order.OrderQty),
             "39": str(OrdStatus.Partially_Filled.value),
             "40": str(order.OrdType),
@@ -136,6 +139,7 @@ def send_partial_fills(order, sequence_number, conn, qty_to_fill=0, old_price=0)
             "56": str(order.ClientCompID),
             "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
             "128": str(order.OnBehalfOfCompID),
+            "57": str(order.SenderSubID),
             "57": str(order.SenderSubID),
             "58": str(configs.get('tag58_order_executed').data),
             "59": str(order.TimeInForce),
@@ -225,7 +229,7 @@ def send_custom_fills(order, sequence_number, conn, qty_to_fill, cumulative_fill
         "31": str(last_price),
         "32": str(int(qty_to_fill)),
         "34": str(sequence_number),
-        "37": str(random.randint(100000, 999999)),
+        "37": str(order.broker_order_id),
         "38": str(order.OrderQty),
         "39": str(order_status),
         "40": str(order.OrdType),
@@ -318,7 +322,7 @@ def send_full_fill(order, sequence_number, conn, target_filled_qty=0, old_price=
         "31": str(last_price),
         "32": str(quantity_last_fill),
         "34": str(sequence_number),
-        "37": str(random.randint(100000, 999999)),
+        "37": str(order.broker_order_id),
         "38": str(order.OrderQty),
         "39": str(OrdStatus.Filled.value),
         "122": datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000"),
