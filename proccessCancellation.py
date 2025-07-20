@@ -37,9 +37,14 @@ def cancel_request(msg_dict, sequence_number, conn):
                          client_comp_id, sender_sub_id, None, id_source, on_behalf_of_comp_id, ori_order_id,
                          security_id)
 
+    cancel_order.broker_order_id = databaseconnector.getSingleResultFromDB(
+        "SELECT BROKER_ORDER_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID ='" + str(cancel_order.orgin_ord_id) + "'")
+
     updated_seq_num = send_cancellation(cancel_order, seq_to_use, conn)
     sequencehandler.save_message_log(order_cancel_related_fm)
+    sequencehandler.save_message_log(order_cancel_related_fm)
     return updated_seq_num
+
 
 
 def send_cancellation(order, sequence_number, conn):
@@ -103,7 +108,7 @@ def send_cancellation(order, sequence_number, conn):
         "31": "0.0000",
         "32": "0",
         "34": str(sequence_number),
-        "37": str(random.randint(100000, 999999)),
+        "37": str(order.broker_order_id),
         "38": str(order_qty),
         "39": str(OrdStatus.Pending_Cancel.value),
         "40": str(ord_type),
@@ -151,7 +156,7 @@ def send_cancellation(order, sequence_number, conn):
         "31": "0.0000",
         "32": "0",
         "34": str(sequence_number),
-        "37": str(random.randint(100000, 999999)),
+        "37": str(order.broker_order_id),
         "38": str(order_qty),
         "39": str(OrdStatus.Canceled.value),
         "40": str(ord_type),

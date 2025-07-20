@@ -1,4 +1,6 @@
 import random
+from datetime import datetime
+import pytz
 
 import orderProcessor
 import write_to_log
@@ -367,9 +369,13 @@ class FIXSimulator:
             output_to_file_log_debug("Attempting to send message.")
             with self.lock:
 
+                order_id= response_fields['11']
+                broker_order_id = databaseconnector.getSingleResultFromDB(
+                    "SELECT BROKER_ORDER_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID ='" + str(order_id) + "'")
+
                 response_fields['49'] = configs.get('simulator_comp_id').data
                 response_fields['17'] = str(random.randint(100000, 999999))
-                response_fields['37'] = str(random.randint(100000, 999999))
+                response_fields['37'] = str(broker_order_id)
                 response_fields['52'] = datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000")
                 response_fields['60'] = datetime.now(pytz.utc).strftime("%Y%m%d-%H:%M:%S.000")
                 response_fields['34'] = str(sequence_number)

@@ -20,9 +20,14 @@ flask_port_to_use = random.randrange(5002, 5055)
 @app.route('/send_message', methods=['POST'])
 def send_message():
     data = request.json
-    fix_simulator.send_custom_message(data, simulator.conn)
-    return jsonify({"status": "Message sent"})
 
+    # Verify if data['11'] is present
+    if '11' not in data:
+        return jsonify({"error": "Missing ClOrdID (11) in the request"}), 400
+
+    else:
+        fix_simulator.send_custom_message(data, simulator.conn)
+        return jsonify({"status": "Message sent"})
 
 @app.route('/orders/retrieve_orders', methods=['GET'])
 def retrieve_orders():

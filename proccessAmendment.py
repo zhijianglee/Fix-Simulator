@@ -71,7 +71,7 @@ def send_amendment(order, new_quantity, ori_order_id, sequence_number, conn):
     price = 0.00
 
     broker_order_id = databaseconnector.getSingleResultFromDB(
-        "SELECT BROKER_ORDER_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID ='" + str(new_order.orgin_ord_id) + "'")
+        "SELECT BROKER_ORDER_ID FROM SIMULATOR_RECORDS WHERE ORDER_ID ='" + str(order.orgin_ord_id) + "'")
 
     cum_quantity = int((databaseconnector.getSingleResultFromDB(
         "SELECT CUMULATIVE_FILLED_QUANTITY FROM SIMULATOR_RECORDS WHERE ORIGCLORDID='" + ori_order_id + "'")))
