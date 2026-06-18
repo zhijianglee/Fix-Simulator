@@ -1,101 +1,113 @@
+# Fix Simulator
 
-# Introduction
+A FIX 4.2 simulator with a Flask backend and a React frontend.
 
-This is a fix simulator using FIX 4.2 protocol built by relying on ChatGPT almost 60%. 
-It has some basic functionalities such as responding to login and order requests **(covered 35=D, 35=F and 35G)**
-This simulator has basic functions for basics testing. You need to configure it according to your needs </br>
+## Project structure
 
-This simulator also comes with a flask application containing several API endpoints. **However, only /fix message/parse_to_json and /send_message is working**. 
+- `backend/` — simulator and API server, Python code, database config, runtime files
+- `frontend/ui/` — React + Vite frontend for API-driven UI
+- `frontend/legacy_static/` — preserved legacy static UI page
 
-# Set Up
+## Prerequisites
 
-## Environment Setup
-Minimum Python version is 3.9, but ideally is 3.12
-Oracle DB is required, or at least a database, it can be MSSQL, MariaDB. However, you need to work out on code implementation in databaseconnector.py
+- Python 3.9+ (3.12 recommended)
+- Node.js 18+ and npm
+- Oracle database or another DB for your backend query support
 
+## Backend setup
 
-## Properties Files
-There are two properties file you need to configure to get things started.
-* simulator.properties
-* db.properties
+1. Open a terminal in `backend/`
+2. Create or activate the Python environment:
 
-### simulator.properties
-Simulator.properties containing list of configurable properties. 
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\activate
+```
 
-Change the simulator_comp_id and ensure that your client fix adapter is pointing to the correct one.
+3. Install dependencies:
 
-simulator.properties has been configured with default values. You may review them and change them according to your 
-preferences. Comments exists in the property file contains tips on how to set the value. 
+```powershell
+pip install -r requirements.txt
+```
 
-The value of market_price_source has been defaulted to 'GOOGLE' which will obtain latest delayed quote from Google Finance. 
+4. Create `backend/db.properties` if it does not exist, with values like:
 
-You can switch it to 'DB' if you want to obtain the last done price from your internal DB. 
+```text
+db_username=fixsim
+db_password=fixsim123
+sn=
+sid=XE
+hostname=localhost
+port=1521
+```
 
-Implementation of the logic to obtain last done price and bid price is in quotes_getter.py
+5. Confirm `backend/simulator.properties` contains the correct simulator settings.
+6. Create the required DB table using `backend/DDL.sql`.
 
-For Example: If This is your query to obtain last done price
+## Running the backend
 
-SELECT LAST_DONE_PRICE FROM COUNTER WHERE COUNTER_CODE='C6L' or SELECT LAST_DONE_PRICE FROM COUNTER WHERE FEED_COUNTER_CODE='C6L.SI'
+From `backend/`:
 
-Then this is how you should configure those values in properties file
+```powershell
+cd backend
+.\.venv\Scripts\activate
+python apiservice.py 7418 5031
+```
 
-* market_price_db_source_table=COUNTER
-* market_stock_column1=FEED_COUNTER_CODE
-* market_stock_column2=COUNTER_CODE
-* market_last_price_column=LAST_DONE_PRICE
+- `7418` is the FIX socket port
+- `5031` is the Flask API port
 
-This is the same for bid price as well. 
+## Frontend setup
 
+1. Open a terminal in `frontend/ui/`
+2. Install Node dependencies:
 
-### db.properties
+```powershell
+cd frontend\ui
+npm install
+```
 
-You will need to create db.properties file containing the below items.
+3. Start the frontend dev server:
 
-* db_username=fixsim
-* db_password=fixsim123
-* sn=
-* sid=XE
-* hostname=localhost
-* port=1521
+```powershell
+npm run dev
+```
 
+4. Open the provided Vite URL (usually `http://localhost:5173`).
 
-You will need to create a user (table space) and grant SELECT, CREATE AND UPDATE query to that user.
-After that login as that user and crete required table using the DDL attached in this directory.
+## Frontend proxy
 
+The React frontend uses Vite proxy configuration in `frontend/ui/vite.config.js` to forward API calls to the backend Flask server at `http://127.0.0.1:5031`.
 
-# Running the simulator
+If you change the Flask port, update the proxy settings accordingly.
 
-1. Ensure the below modules are being installed Refer to requirements.txt
-2. Start the simulator by using python3 apiservice.py 7418 5031
+## Available UI flows
 
-   7418 is binding port for fix message
-   5031 is the port for API request
+- Send a custom FIX message using `/send_message`
+- Retrieve orders by client comp ID using `/retrieve_orders_by_client_comp_id/<client_comp_id>`
+- Right-click any order row in the table to open a context menu:
+  - View JSON
+  - Copy JSON
+  - More actions
 
-   Please use one port for one fix session
+## Legacy static UI
 
+The legacy static UI files are preserved under `frontend/legacy_static/`.
 
-# Using FIX Server Simulator API endpoints
+## Notes on configuration
 
-## Using /send_message
+- The simulator uses `backend/simulator.properties` and `backend/db.properties`.
+- Database integration is implemented in `backend/databaseconnector.py`.
+- Order and FIX processing logic lives in `backend/simulator.py` and the `backend/proccess*` modules.
 
-You can use this to send fix message to connected client by passing in your desired tags in a json object form
+## Known issues
 
-### These tags will be automatically added. Do not include them
+- Sequence number may drift over long sessions
+- FIX messages may require adapter-specific adjustments
+- Simulator handles one connected client per port
 
-49,17,37,52,60,34,10
-
-
-# Known Bugs and Pull Requests are Welcomed
-1. Sequence number will be out of sync after some time running the simulator
-2. The fix message return from the simulator might not get recognized by your fix adapter / client.
-3. No multithreading capability. One port can only serve one comp id
-
-
-
-# Working Examples / Tests
-
-
-### **Order Submissions**
+## Example screenshot
 
 ![img.png](img.png)
 

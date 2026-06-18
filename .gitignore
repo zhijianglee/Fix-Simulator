@@ -1,1 +1,4 @@
 /db.properties
+# Ignore backend local virtual env and logs
+backend/.venv/
+backend/simulator.log

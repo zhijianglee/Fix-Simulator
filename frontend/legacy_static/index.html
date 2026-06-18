@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FIX Simulator UI</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="app-shell">
+        <header>
+            <h1>FIX Simulator UI</h1>
+        </header>
+
+        <section class="panel">
+            <h2>Send Custom Message</h2>
+            <form id="message-form">
+                <label>
+                    ClOrdID (11)
+                    <input type="text" id="clordid" placeholder="OMS_OCBC_01" required />
+                </label>
+                <label>
+                    SenderCompID (49)
+                    <input type="text" id="sender_comp_id" placeholder="OMS_OCBC_01" required />
+                </label>
+                <label>
+                    TargetCompID (56)
+                    <input type="text" id="target_comp_id" placeholder="LZJSIM" required />
+                </label>
+                <label>
+                    Custom FIX message JSON
+                    <textarea id="custom_message" placeholder='{"35":"D","11":"..."}' rows="8"></textarea>
+                </label>
+                <button type="submit">Send Message</button>
+            </form>
+            <div id="message-result" class="result"></div>
+        </section>
+
+        <section class="panel">
+            <h2>Retrieve Orders by Client Comp ID</h2>
+            <form id="retrieve-form">
+                <label>
+                    Client Comp ID
+                    <input type="text" id="client_comp_id" placeholder="OMS_OCBC_01" required />
+                </label>
+                <button type="submit">Retrieve Orders</button>
+            </form>
+            # Display the retrieved orders in a table format
+            <table id="retrieve-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px;">ClOrdID (11)</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">MsgType (35)</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">OrderQty (38)</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Price (44)</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">Side (54)</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">TransactTime (60)</th>
+                    </tr>
+                </thead>
+                <tbody id="retrieve-table-body">
+                    <!-- Retrieved orders will be inserted here -->
+                
+                </tbody>  
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

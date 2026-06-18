@@ -7,6 +7,7 @@ import sys
 from flask import Flask, request, jsonify
 import threading
 
+import databaseconnector
 from builder import *
 from simulator import FIXSimulator
 import random
@@ -17,6 +18,11 @@ fix_simulator = FIXSimulator()
 flask_port_to_use = random.randrange(5002, 5055)
 
 
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
+
+
 @app.route('/send_message', methods=['POST'])
 def send_message():
     data = request.json
@@ -25,15 +31,24 @@ def send_message():
     if '11' not in data:
         return jsonify({"error": "Missing ClOrdID (11) in the request"}), 400
 
-    else:
-        fix_simulator.send_custom_message(data, simulator.conn)
-        return jsonify({"status": "Message sent"})
+    if fix_simulator.conn is None:
+        return jsonify({"error": "Simulator connection is not available"}), 503
 
-@app.route('/orders/retrieve_orders', methods=['GET'])
-def retrieve_orders():
+    fix_simulator.send_custom_message(data, fix_simulator.conn)
+    return jsonify({"status": "Message sent"})
+
+@app.route('/retrieve_orders_by_client_comp_id/<client_comp_id>', methods=['GET'])
+def retrieve_orders(client_comp_id):
+    # Implementation for retrieving orders by client comp ID
+    orders = databaseconnector.getResultFromDB("SELECT * FROM SIMULATOR_RECORDS WHERE CLIENT_COMP_ID = '{}'".format(client_comp_id))
+    logging.info("Retrieved orders for client comp ID {}: {}".format(client_comp_id, orders))
+    return jsonify(orders)
+
+
+@app.route('/orders/possible_actions', methods=['GET'])
+def possible_actions():
     data = request.json
-    sender_comp_id = data.get('senderCompID')
-
+    order_ref_num=data.get('orderRefNum')
 
 @app.route('/orders/retrieve_single_order', methods=['GET'])
 def retrieve_single_order():

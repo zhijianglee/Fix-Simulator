@@ -65,22 +65,32 @@ def getSingleResultFromDB(query,backup_query=None):
 
 
 def getResultFromDB(query):
-    connection = oracledb.connect(user=fryingpan, host=hostname, password=saucepan, service_name=sn, port=port)
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
     try:
+        connection = oracledb.connect(user=fryingpan, host=hostname, password=saucepan, service_name=sn, port=port)
+        cursor = connection.cursor()
+        output_to_file_log_debug(query)
         cursor.execute(query)
         rows = cursor.fetchall()
 
-        result = []
-        for row in rows:
-            result.append(dict(zip([column[0] for column in cursor.description], row)))
+        columns = [column[0] for column in cursor.description]
+        result = [dict(zip(columns, row)) for row in rows]
 
-        cursor.close()
-        connection.close()
-
-        # Return the query result as JSON
-        return jsonify(result), 200
+        return result
 
     except oracledb.DatabaseError as e:
-        # If an error occurs during the query execution, return an error response
-        return jsonify({'error': 'An error occurred while executing the query'}), 500
+        print(f"Database error: {e}")
+        return []
+
+    finally:
+        if cursor is not None:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if connection is not None:
+            try:
+                connection.close()
+            except Exception:
+                pass
