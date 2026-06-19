@@ -77,6 +77,13 @@ def send_rejection(order, sequence_number, conn):
     global_list.append(fix_message)
     orders_rejection_related_fm.append(fix_message)
     sequencehandler.save_message_log(orders_rejection_related_fm)
+    # Update the order status in the database to 'Rejected'
+
+    databaseconnector.doInsert(
+        "UPDATE SIMULATOR_RECORDS SET ORDSTATUS=" + str(
+            OrdStatus.Rejected.value) +
+        " WHERE ORDER_ID ='" + str(order.orgin_ord_id) + "'")
+
     return sequence_number
 
 

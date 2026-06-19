@@ -15,7 +15,7 @@ body, html, #root {
 }
 
 .page-shell {
-  max-width: 980px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -78,6 +78,78 @@ button:hover {
   background: #1d4ed8;
 }
 
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  background: #e5e7eb;
+  border: none;
+  border-radius: 999px;
+  color: #1f2937;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: #2563eb;
+  color: white;
+}
+
+.column-selection {
+  margin-top: 18px;
+}
+
+.column-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.column-actions button {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #111827;
+}
+
+.column-actions button:hover {
+  background: #e5e7eb;
+}
+
+.column-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.column-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 18px;
+}
+
+table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  margin-top: 18px;
+}
+
 .message-box,
 .order-box {
   margin-top: 18px;
@@ -129,6 +201,8 @@ button:hover {
   justify-content: center;
   background: rgba(0,0,0,0.4);
   z-index: 2000;
+  padding: 16px;
+  overflow: auto;
 }
 .modal-content {
   background: white;
@@ -136,6 +210,8 @@ button:hover {
   border-radius: 10px;
   max-width: 800px;
   width: 90%;
+  max-height: calc(100vh - 64px);
+  overflow: auto;
 }
 
 table {
@@ -158,3 +234,104 @@ th {
 tbody tr:nth-child(even) {
   background: #f9fafb;
 }
+
+.status-row-new {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.status-row-partial {
+  background: rgba(34, 197, 94, 0.14);
+}
+
+.status-row-filled {
+  background: rgba(22, 163, 74, 0.18);
+}
+
+.status-row-rejected {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.status-row-canceled {
+  background: rgba(249, 115, 22, 0.12);
+}
+
+.status-row-pending {
+  background: rgba(234, 179, 8, 0.12);
+}
+
+.status-row-expired {
+  background: rgba(107, 114, 128, 0.12);
+}
+
+.status-row-info {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.status-header-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.status-info-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #111827;
+  font-size: 0.8rem;
+}
+
+.status-legend-grid {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.status-legend-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.status-chip {
+  display: inline-flex;
+  min-width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 700;
+  color: white;
+  padding: 0 10px;
+}
+
+.status-chip.status-row-new { background: #2563eb; }
+.status-chip.status-row-partial { background: #16a34a; }
+.status-chip.status-row-filled { background: #15803d; }
+.status-chip.status-row-rejected { background: #ef4444; }
+.status-chip.status-row-canceled { background: #f97316; }
+.status-chip.status-row-pending { background: #ca8a04; }
+.status-chip.status-row-expired { background: #374151; }
+.status-chip.status-row-info { background: #2563eb; }
+
+.status-chip.status-row-new { background: #2563eb; }
+.status-chip.status-row-partial { background: #16a34a; }
+.status-chip.status-row-filled { background: #15803d; }
+.status-chip.status-row-rejected { background: #ef4444; }
+.status-chip.status-row-canceled { background: #f97316; }
+.status-chip.status-row-pending { background: #ca8a04; }
+.status-chip.status-row-expired { background: #374151; }
+.status-chip.status-row-info { background: #2563eb; }

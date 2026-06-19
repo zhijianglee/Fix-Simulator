@@ -63,7 +63,7 @@ def main():
             else:
                 print("Failed to receive response.")
 
-            proposed_order_id = "OSCBD6C41908648"
+            proposed_order_id = "OSCBD6C41909688"
             # amended_order_id = "OSCBD6C41908611"
             #
             order_creation_message = create_order_create_request(sender_comp_id, target_comp_id, proposed_order_id)
@@ -114,7 +114,7 @@ def create_order_create_request(sender_comp_id, target_comp_id, proposed_order_i
         "15": "SGD",
         "21": "1",
         "22": "8",
-        "38": "12000",
+        "38": "6000",
         "40": "1",
         "44": "6",
         "54": "1",
